@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{c6a8b0a4-7c95-46ce-9835-6f398dbcd044}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>bot.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="bot.py" />
+    <Compile Include="src\libraries\arcapi.py" />
+    <Compile Include="src\libraries\arcdraw.py" />
+    <Compile Include="src\libraries\arcsql.py" />
+    <Compile Include="src\libraries\config.py" />
+    <Compile Include="src\libraries\gosen_choyen.py" />
+    <Compile Include="src\libraries\image.py" />
+    <Compile Include="src\libraries\img_template.py" />
+    <Compile Include="src\libraries\maimaidx_guess.py" />
+    <Compile Include="src\libraries\maimaidx_music.py" />
+    <Compile Include="src\libraries\maimai_best_40.py" />
+    <Compile Include="src\libraries\maimai_plate.py" />
+    <Compile Include="src\libraries\tool.py" />
+    <Compile Include="src\plugins\arcaea.py" />
+    <Compile Include="src\plugins\coc.py" />
+    <Compile Include="src\plugins\database.py" />
+    <Compile Include="src\plugins\groupadmin.py" />
+    <Compile Include="src\plugins\guild.py" />
+    <Compile Include="src\plugins\image.py" />
+    <Compile Include="src\plugins\maimaidx.py" />
+    <Compile Include="src\plugins\majsoul.py" />
+    <Compile Include="src\plugins\public.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\" />
+    <Folder Include="src\libraries" />
+    <Folder Include="src\plugins" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>

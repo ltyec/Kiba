@@ -20,12 +20,15 @@ async def init_db():
             "create table waiting_table (shop text, location text, wait int, updated text);"
             "create table plp_table (id bigint, user_id bigint, nickname text, message text, is_picture bit, view bigint, reply bigint);"
             "create table plp_reply_table (id bigint, plpid bigint, userid bigint, nickname text, message text);"
-            "create table group_plp_table (group_id bigint, disableinsert int, disabletake int, disablereply int);"
-            "create table plp_blacklist_table (id bigint, lastbanner bigint, disableinsert int, disabletake int, disablereply int)"
+            "create table group_plp_table (group_id bigint, disableinsert int, disabletake int, disablereply int, slowmode int, limit int, time bigint);"
+            "create table plp_blacklist_table (id bigint, lastbanner bigint, disableinsert int, disabletake int, disablereply int);"
+            "create table gld_table (qq bigint, uid bigint);"
+            "create table sign_table (no bigint, id bigint, day int);"
+            "create table acard_table (id bigint, times int, six int, five int, four int, three int, two int, one int);"
             )
         logger.info("Kiba Kernel -> Create \"Kiba Database\" successfully")
-    except Exception:
-        logger.info("Kiba Kernel --Skip-> Database Created....Skipped Creating Databases.")
+    except Exception as e:
+        logger.info(f"Kiba Kernel --Skip-> Database Created....Skipped Creating Databases. \n[SKIP ERR]{e}")
         pass
 
 @driver.on_shutdown

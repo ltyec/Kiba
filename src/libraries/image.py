@@ -9,6 +9,7 @@ import aiohttp
 
 path = 'src/static/high_eq_image.png'
 fontpath = "src/static/msyh.ttc"
+texttoimage_font = "src/static/HOS.ttf"
 
 
 def draw_text(img_pil, text, offset_x):
@@ -26,7 +27,7 @@ def draw_text(img_pil, text, offset_x):
 
 
 def text_to_image(text):
-    font = ImageFont.truetype(fontpath, 24)
+    font = ImageFont.truetype(texttoimage_font, 24)
     padding = 10
     margin = 4
     text_list = text.split('\n')

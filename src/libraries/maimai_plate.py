@@ -3,8 +3,8 @@ from typing import Optional, Dict, List
 import aiohttp
 
 plate_to_version = {
-        '初': 'maimai',
-        '真': 'maimai PLUS',
+        '真1': 'maimai',
+        '真2': 'maimai PLUS',
         '超': 'maimai GreeN',
         '檄': 'maimai GreeN PLUS',
         '橙': 'maimai ORANGE',
