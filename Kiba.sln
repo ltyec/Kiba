@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Kiba", "Kiba.pyproj", "{C6A8B0A4-7C95-46CE-9835-6F398DBCD044}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6A8B0A4-7C95-46CE-9835-6F398DBCD044}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6A8B0A4-7C95-46CE-9835-6F398DBCD044}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {00CBE8D6-8223-4273-9180-2B5E7E4F9C33}
+	EndGlobalSection
+EndGlobal
