@@ -22,17 +22,17 @@ help_admin = on_command('admin.help')
 async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''▼ 群管理功能 | Commands For Group Admin                                          
 ----------------------------------------------------------------------------------------------------------------------------------------
-/Kiba 烟我 | /Kiba 抽奖       -->       对发送者随机禁言 60 - 600 秒
+/lmm 烟我 | /lmm 抽奖       -->       对发送者随机禁言 60 - 600 秒
 
-/Kiba 睡觉 | /Kiba sleep       -->       对发送者随机禁言 36000 - 96000 秒
+/lmm 睡觉 | /lmm sleep       -->       对发送者随机禁言 36000 - 96000 秒
 
-/Kiba 禁言轮盘 [1-6之间的数字] | /Kiba round [1-6之间的数字]      -->       发送者输入一个数字，若与随机数相等，则禁言 60-960 秒。
+/lmm 禁言轮盘 [1-6之间的数字] | /lmm round [1-6之间的数字]      -->       发送者输入一个数字，若与随机数相等，则禁言 60-960 秒。
 
 [@我]禁言 [QQ号] | [@我]ban [QQ号]      -->       对输入的QQ号随机禁言 60 - 9600 秒，需要发送者是管理员才会执行。
 
 [@我]强制睡眠 [QQ号] | [@我]forcesleep [QQ号]      -->       对输入的QQ号随机禁言 36000 - 96000 秒，需要发送者是管理员才会执行。
 
-请注意：以上命令都需要 Kiba（犽） 是管理员身份才可以使用。
+请注意：以上命令都需要 lmm（恋萌萌） 是管理员身份才可以使用。
 ----------------------------------------------------------------------------------------------------------------------------------------'''
     await help_admin.send(Message([{
         "type": "image",
@@ -42,7 +42,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     }]))
 
 
-selfban = on_command("/Kiba 烟我", aliases={'/Kiba 抽奖', '/kiba 烟我', '/kiba 抽奖'})
+selfban = on_command("/lmm 烟我", aliases={'/lmm 抽奖'})
 
 @selfban.handle()
 async def _(bot: Bot, event: Event, state: T_State):
@@ -97,7 +97,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             else:
                 await ban.finish("▿ 禁言 - 出现问题\n私聊我烟个锤子....或者您在用频道? 这个功能还没有支持频道呢。")
 
-sleepy = on_command("/Kiba 睡觉", aliases={'/Kiba sleep', '/kiba 睡觉', '/kiba sleep'})
+sleepy = on_command("/lmm 睡觉", aliases={'/lmm sleep'})
 
 @sleepy.handle()
 async def _(bot: Bot, event: Event, state: T_State):
@@ -150,7 +150,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             else:
                 await forcesleep.finish("▿ 强制睡眠 - 出现问题\n私聊我烟个锤子....或者您在用频道? 这个功能还没有支持频道呢。")
 
-rounding = on_command("/Kiba 禁言轮盘", aliases={'/Kiba round', '/kiba 禁言轮盘', '/kiba round'})
+rounding = on_command("/lmm 禁言轮盘", aliases={'/lmm round'})
 @rounding.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     argv = str(event.get_message()).strip().split(" ")
