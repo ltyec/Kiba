@@ -1,1619 +1,1930 @@
-import random
-import re
+from collections import defaultdict
 
-from PIL import Image
 from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex
 from nonebot.typing import T_State
-from nonebot.adapters.cqhttp import Message, Event, Bot
-from src.libraries.image import *
-from random import randint
-import asyncio
+from nonebot.adapters import Event, Bot
 from nonebot.adapters.cqhttp import Message, MessageSegment, GroupMessageEvent, PrivateMessageEvent
 from src.plugins.guild import GuildMessageEvent
 
-from nonebot.rule import to_me
-from src.libraries.image import image_to_base64, path, draw_text, get_jlpx, text_to_image
 from src.libraries.tool import hash
+from src.libraries.maimaidx_music import *
+from src.libraries.image import *
+from src.libraries.maimai_best_40 import *
 
-import time
+from src.libraries.maimai_plate import *
+
+import re
 import datetime
-from collections import defaultdict
+import time
+
+from src.libraries.maimaidx_guess import GuessObject
+from nonebot.permission import Permission
+from nonebot.log import logger
+import requests
+import json
+import random
+from urllib import parse
+import asyncio
+from nonebot.rule import to_me
 from src.libraries.config import Config
 
 driver = get_driver()
 
-scheduler = require("nonebot_plugin_apscheduler").scheduler
+@driver.on_startup
+def _():
+    logger.info("Kiba Kernel -> Load \"DX\" successfully")
 
-helper = on_command('help', aliases={'about'})
+help_mai = on_command('maimai.help')
 
-@helper.handle()
+@help_mai.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
-   
-help_others = on_command('public.help')
+    help_str = '''▼ 舞萌模块可用命令 | Commands For Maimai                                               
+------------------------------------------------------------------------------------------------------------------------------
+今日舞萌/今日运势                                                               查看今天的舞萌运势
 
-@help_others.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    help_str = '''▼ 其它功能 | Commands For Public                                             
+XXXmaimaiXXX什么                                                           随机一首歌
+
+随个[dx/标准][绿黄红紫白]<难度>                                      随机一首指定条件的乐曲
+
+随<数量>个[dx/标准][绿黄红紫白]<难度1>                       随机指定首指定条件的乐曲（不超过4个）
+[至]<难度2>                                                                        可以设置两个难度，会从其中随机歌曲
+
+查歌<乐曲标题的一部分>                                                    查询符合条件的乐曲
+
+[绿黄红紫白]id<歌曲编号>                                                  查询乐曲信息或谱面信息
+
+<歌曲别名>是什么歌                                                            查询乐曲别名对应的乐曲
+
+定数查歌 <定数下限> <定数上限>                                      查询定数对应的乐曲
+
+分数线 <难度+歌曲id> <分数线>                                       详情请输入“分数线 帮助”查看
+
+jrrp/人品值                                                                           查看今天的人品值。
+
+今日性癖/jrxp                                                                       看看你今天性什么东西捏？
+
+猜歌                                                                                       开始一轮猜歌                                                         
+
+b40 / b50                                                                              根据查分器数据生成你的 Best 40 /Best 50。
+
+[@我]<出勤店铺><人数/几>人                                             设置或者显示当前店铺的出勤人数
+
+[@我]<出勤店铺>位置                                                           显示店铺的位置
+
+段位模式 <Expert/Master> <初级/中级/上级/超上级>        模拟Splash Plus的随机段位模式。
+                                                                                            详情请输入“段位模式 帮助”查看
+
+
+<牌子名>进度                                                                     查询您的查分器，获取对应牌子的完成度。
+
+                                                                                             查询您的查分器，获取对应等级的完成度。
+<等级><Rank/Sync/Combo状态>进度                             * Rank: S/S+/SS/SS+/SSS/SSS+等
+                                                                                             Sync: FS/FS+/FDX/FDX+ Combo: FC/FC+/AP/AP+
+
+我要在<等级>上<分值>分                                                   犽的锦囊 - 快速推荐上分歌曲。
+
+查看排名/查看排行                                                               查看查分器网站 Rating 的 TOP50 排行榜！
+
+底分分析/rating分析 <用户名>                                           Best 40 的底分分析
+
+早/[上午/中午/晚上]好/签到                                                             进行一波签到，然后可以得到今天的运势歌曲。
 ------------------------------------------------------------------------------------------------------------------------------
-戳一戳                                                                                  来戳戳我？
-本群戳一戳情况                                                                    查看一下群里有几位杰出的无聊人
-今日雀魂                                                                               查看今天的雀魂运势
-mjxp                                                                                     看看你今天要做什么牌捏？
-低情商<str1>高情商<str2>                                                 生成一张低情商高情商图片，
-                                                                                              把str1/2换成自己的话。
-gocho <str1> <str2>                                                         生成一张gocho图。
-金龙盘旋 <str1> <str2> <str3>                                         生成一张金龙盘旋图。
-投骰子<数量>                                                                       在线投骰子(?)
-投百面骰子<数量>                                                             * 可以选择六面/百面
-                                                                                              这个功能可以随机禁言你1-600秒，前提恋萌萌是管理员。
-烟我                                                                                    * 注意:为防止误触发，
-                                                                                              这个功能你需要at一下恋萌萌再说这个命令才能执行。
-                                                                                               群里摇人。
-随个[男/女]群友                                                                    你也可以不带参数直接说"随个"然后后面加啥都可以。
-                                                                                               当然恋萌萌容易骂你就是了。
-帮选                                                                                      帮你选 
-轮盘                                                                                      与帮选类似，不过增加了选项概率。
-模拟抽卡/抽卡模拟                                                               抽卡模拟器
-模拟十连/十连模拟                                                               抽卡模拟器 (十连模式)
-我的抽卡情况/抽卡情况                                                        查看抽卡模拟器的抽卡情况
+
+▼ 管理员设置 | Administrative                                             
 ------------------------------------------------------------------------------------------------------------------------------
-▼ 漂流社区 | Bottle Public Community                                           
-------------------------------------------------------------------------------------------------------------------------------
-扔瓶子                                                                                   扔个瓶子给恋萌萌。说不定会被别人读到哦。
-捞瓶子                                                                                    捞一个瓶子，怎么全几把是东营群友
-回复瓶子 <漂流瓶 ID>                                                         给这个瓶子做评论吧！
- 
-看回复 <漂流瓶 ID>                                                             查看漂流瓶下面的回复！
-删瓶子 <漂流瓶 ID>                                                             删除您发布的漂流瓶。
-                                                                                             * 管理员使用此指令可删除其他人瓶子。
-当前瓶子数量                                                                        查询社区当前漂流瓶子数量，此命令不受社区限制。
-我的漂流瓶                                                                           我的漂流社区情况
-------------------------------------------------------------------------------------------------------------------------------
-▼ 频道设置 | Channel                                            
-------------------------------------------------------------------------------------------------------------------------------
-您可能需要绑定QQ号来免账号使用以上部分功能。绑定功能如下：
-绑定 <QQ号>
-解绑
-------------------------------------------------------------------------------------------------------------------------------
-▼ 管理员模块控制 | Administrative
-------------------------------------------------------------------------------------------------------------------------------
-设置漂流社区: 
-漂流瓶设置 <完全启(禁)用/启(禁)用扔瓶子/启(禁)用捞瓶子/启(禁)用扔瓶子/启(禁)用回复/启（禁）用慢速(群聊可用)> 
-<QQ号(可选)/慢速间隔时间(秒,可选)> <群号(可选)>
-社区设置帮助请直接输入"漂流瓶设置"
-设置戳一戳: 戳一戳设置 <启用/限制 (时间-秒)/禁用>
-戳一戳帮助请直接输入"戳一戳设置"
-删瓶子: 见上表可用命令中的说明，管理员允许删除任何人的漂流瓶。
+店铺设置 <店铺名> <店铺位置（可选）>
+
+猜歌设置 <启用/禁用>
 ------------------------------------------------------------------------------------------------------------------------------'''
-    await help_others.send(Message([{
+    await help_mai.send(Message([{
         "type": "image",
         "data": {
             "file": f"base64://{str(image_to_base64(text_to_image(help_str)), encoding='utf-8')}"
         }
     }]))
 
-async def _group_poke(bot: Bot, event: Event, state: dict) -> bool:
-    value = (event.notice_type == "notify" and event.sub_type == "poke" and event.target_id == int(bot.self_id))
-    return value
-
-poke = on_notice(rule=_group_poke, priority=10, block=True)
-poke_dict = defaultdict(lambda: defaultdict(int))
-
-async def invoke_poke(group_id, user_id) -> str:
-    db = get_driver().config.db
-    ret = "default"
-    ts = int(time.time())
-    c = await db.cursor()
-    await c.execute(f"select * from group_poke_table where group_id={group_id}")
-    data = await c.fetchone()
-    if data is None:
-        await c.execute(f'insert into group_poke_table values ({group_id}, {ts}, 1, 0, "default")')
-    else:
-        t2 = ts
-        if data[3] == 1:
-            return "disabled"
-        if data[4].startswith("limited"):
-            duration = int(data[4][7:])
-            if ts - duration < data[1]:
-                ret = "limited"
-                t2 = data[1]
-        await c.execute(f'update group_poke_table set last_trigger_time={t2}, triggered={data[2] + 1} where group_id={group_id}')
-    await c.execute(f"select * from user_poke_table where group_id={group_id} and user_id={user_id}")
-    data2 = await c.fetchone()
-    if data2 is None:
-        await c.execute(f'insert into user_poke_table values ({user_id}, {group_id}, 1)')
-    else:
-        await c.execute(f'update user_poke_table set triggered={data2[2] + 1} where user_id={user_id} and group_id={group_id}')
-    await db.commit()
-    return ret
-
-@poke.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    v = "default"
-    if event.__getattribute__('group_id') is None:
-        event.__delattr__('group_id')
-    else:
-        group_dict = poke_dict[event.__getattribute__('group_id')]
-        group_dict[event.sender_id] += 1
-        if v == "disabled":
-            await poke.finish()
-            return
-    r = randint(1, 20)
-    if v == "limited":
-        await poke.send(Message([{
-            "type": "poke",
-            "data": {
-                "qq": f"{event.sender_id}"
-            }
-        }]))
-    elif r == 2:
-        await poke.send(Message('拍你🐎'))
-    elif r == 3:
-        url = await get_jlpx('拍', '你妈', '闲着没事干')
-        await poke.send(Message([{
-            "type": "image",
-            "data": {
-                "file": url
-            }
-        }]))
-    elif r == 4:
-        img_p = Image.open(path)
-        draw_text(img_p, '拍你妈', 0)
-        draw_text(img_p, '有尝试过玩武盟DX吗', 400)
-        await poke.send(Message([{
-            "type": "image",
-            "data": {
-                "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
-            }
-        }]))
-    elif r == 5:
-        await poke.send(Message('呜呜呜...不要再拍啦...'))
-    elif r <= 7 and r > 5:
-        await poke.send(Message([{
-            "type": "image",
-            "data": {
-                "file": f"https://www.diving-fish.com/images/poke/{r - 5}.gif",
-            }
-        }]))
-    elif r <= 12 and r > 7:
-        await poke.send(Message([{
-            "type": "image",
-            "data": {
-                "file": f"https://www.diving-fish.com/images/poke/{r - 7}.jpg",
-            }
-        }]))
-    elif r <= 17 and r > 12:
-        await poke.send(Message(f'好的....大家请各位戳刚刚拍我帽子的那位。'))
-    elif r <= 19 and r > 17:
-        t = random.randint(60,90)
-        try:
-            await bot.set_group_ban(group_id=event.__getattribute__('group_id'), user_id=event.sender_id, duration=t)
-            await poke.send(f'别拍了！！烟你{t}秒冷静一下。')
-        except Exception as e:
-            print(e)
-            await poke.send(Message('一天到晚就知道拍拍拍，你不许拍了！(╬▔皿▔)╯'))
-    elif r == 1:
-        await poke.send(Message('一天到晚就知道拍，拍自己肚皮不行吗？'))
-    else:
-        await poke.send(Message([{
-            "type": "poke",
-            "data": {
-                "qq": f"{event.sender_id}"
-            }
-        }]))
-
-async def send_poke_stat(group_id: int, bot: Bot):
-    if group_id not in poke_dict:
-        return
-    else:
-        group_stat = poke_dict[group_id]
-        sorted_dict = {k: v for k, v in sorted(group_stat.items(), key=lambda item: item[1], reverse=True)}
-        index = 0
-        data = []
-        for k in sorted_dict:
-            data.append((k, sorted_dict[k]))
-            index += 1
-            if index == 3:
-                break
-        await bot.send_msg(group_id=group_id, message="▾ 戳一戳总结\n欢迎来到“金中指奖”的颁奖现场！\n接下来公布一下上次重启以来，本群最JB闲着没事 -- 干玩戳一戳的获奖者。")
-        await asyncio.sleep(1)
-        if len(data) == 3:
-            await bot.send_msg(group_id=group_id, message=Message([
-                {"type": "text", "data": {"text": "▾ 戳一戳总结 - 铜牌\n铜中指奖的获得者是"}},
-                {"type": "at", "data": {"qq": f"{data[2][0]}"}},
-                {"type": "text", "data": {"text": f"!!\n累计戳了 {data[2][1]} 次！\n让我们恭喜这位闲的没事干的家伙！"}},
-            ]))
-            await asyncio.sleep(1)
-        if len(data) >= 2:
-            await bot.send_msg(group_id=group_id, message=Message([
-                {"type": "text", "data": {"text": "▾ 戳一戳总结 - 银牌\n银中指奖的获得者是"}},
-                {"type": "at", "data": {"qq": f"{data[1][0]}"}},
-                {"type": "text", "data": {"text": f"!!\n累计戳了 {data[1][1]} 次！\n这太几把闲得慌了，请用中指戳戳自己肚皮解闷!"}},
-            ]))
-            await asyncio.sleep(1)
-        await bot.send_msg(group_id=group_id, message=Message([
-            {"type": "text", "data": {"text": "▾ 戳一戳总结 - 金牌\n最JB离谱的!!金中指奖的获得者是"}},
-            {"type": "at", "data": {"qq": f"{data[0][0]}"}},
-            {"type": "text", "data": {"text": f"!!!\nTA一共戳了{data[0][1]}次，此时此刻我想询问获奖者一句话:就那么喜欢听我骂你吗?"}},
-        ]))
-
-
-poke_stat = on_command("本群戳一戳情况")
-
-
-@poke_stat.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    try:
-        group_id = event.group_id
-        await send_poke_stat(group_id, bot)
-    except Exception as e:
-        await poke_setting.finish(f"▿ 戳一戳总结 - 现在是私聊或频道？\n私聊看群戳一戳情况...有点大病(确信)。\n如果是频道模式，则暂时不支持。\n如果都不是，看下下面的错误记录。\n[Exception Occurred]\n{e}")
-
-
-poke_setting = on_command("戳一戳设置")
-
-
-@poke_setting.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    db = get_driver().config.db
-    try:
-        group_members = await bot.get_group_member_list(group_id=event.group_id)
-        for m in group_members:
-            if m['user_id'] == event.user_id:
-                break
-        if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in Config.superuser:
-            await poke_setting.finish("这个...只有管理员可以设置戳一戳, 但是你不要去戳我....嗯..尽量别戳啦。")
-            return
-    except Exception as e:
-        await poke_setting.finish(f"▿ 戳一戳设置 - 现在是私聊或频道？\n私聊设置个锤子戳一戳，你别戳不就完事了。\n如果是频道模式，则暂时不支持设置戳一戳。\n如果都不是，看下下面的错误记录。\n[Exception Occurred]\n{e}")
-    argv = str(event.get_message()).strip().split(' ')
-    try:
-        if argv[0] == "默认":
-            c = await db.cursor()
-            await c.execute(f'update group_poke_table set disabled=0, strategy="default" where group_id={event.group_id}')
-        elif argv[0] == "限制":
-            c = await db.cursor()
-            await c.execute(
-                f'update group_poke_table set disabled=0, strategy="limited{int(argv[1])}" where group_id={event.group_id}')
-        elif argv[0] == "禁用":
-            c = await db.cursor()
-            await c.execute(
-                f'update group_poke_table set disabled=1 where group_id={event.group_id}')
-        else:
-            raise ValueError
-        await poke_setting.send(f"▾ 戳一戳设置 - 成功\n戳一戳已成功设置为: {argv[0]}")
-        await db.commit()
-    except (IndexError, ValueError):
-        await poke_setting.finish("▾ 戳一戳设置 - 帮助\n本命令的格式:\n戳一戳设置 <默认/限制 (秒)/禁用>\n\n - 默认:将启用默认的戳一戳设定，包括随机性抽中禁言 1 - 1 分 30 秒。\n - 限制 (秒):在戳完一次 Kiba 的指定时间内，调用戳一戳只会让 Kiba 反过来戳你。在指定时间外时，与默认相同。\n- 禁用:禁用戳一戳的相关功能。")
-        pass
-
-shuffle = on_command('shuffle')
-
-
-@shuffle.handle()
-async def _(bot: Bot, event: Event):
-    argv = int(str(event.get_message()))
-    if argv > 100:
-        await shuffle.finish('▿ 随机排列 - 数字过大\n随机排列太多了会刷屏，请输入100以内的数字。')
-        return
-    d = [str(i + 1) for i in range(argv)]
-    random.shuffle(d)
-    await shuffle.finish(','.join(d))
-
-roll = on_regex(r"^([1-9]\d*)r([1-9]\d*)")
-
-@roll.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    regex = "([1-9]\d*)r([1-9]\d*)"
-    groups = re.match(regex, str(event.get_message())).groups()
-    try:
-        num = random.randint(int(groups[0]),int(groups[1]))
-        await roll.send(f"▾ 随机数\n您的随机数是{num}。")
-    except Exception:
-        await roll.send("▿ 随机数 - 错误\n语法有错哦，您是不是输入的浮点数还是落了一个？或者左面比右面的数字大？这都是不可以的。")
-
-tz = on_regex(r"^投骰子([1-9]\d*)")
-
-@tz.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    regex = "投骰子([1-9]\d*)"
-    groups = re.match(regex, str(event.get_message())).groups()
-    try:
-        if int(groups[0]) > 10:
-            await roll.send("▿ 骰子 - 过多\n骰子数量不能大于10个。你是要刷屏嘛？")
-        else:
-            s = "▾ 骰子\n结果如下:"
-            for i in range(int(groups[0])):
-                num = random.randint(1,6)
-                s += f'\n第 {i + 1} 个骰子 投掷结果是: {num}点'
-            await roll.send(s)
-    except Exception:
-        await roll.send("▿ 骰子 - 错误\n语法上可能有错哦。再检查一下试试吧！")
-
-tz_100 = on_regex(r"^投百面骰子([1-9]\d*)")
-
-@tz_100.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    regex = "投百面骰子([1-9]\d*)"
-    groups = re.match(regex, str(event.get_message())).groups()
-    try:
-        if int(groups[0]) > 10:
-            await roll.send("▿ 百面骰子 - 过多\n骰子数量不能大于10个。你是要刷屏嘛？")
-        else:
-            s = "▾ 百面骰子\n结果如下:"
-            for i in range(int(groups[0])):
-                num = random.randint(1,100)
-                s += f'\n第 {i + 1} 个骰子 投掷结果是: {num}点'
-            await roll.send(s)
-    except Exception:
-        await roll.send("▿ 百面骰子 - 错误\n语法上可能有错哦。再检查一下试试吧！")
-
-random_person = on_regex("随个([男女]?)群友")
-
-@random_person.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    try:
-        mt = event.message_type
-        if mt == "guild":
-            await random_person.finish("▿ 随人 - 未支持\n随人功能暂时不支持频道。")
-            return
-        gid = event.group_id
-        glst = await bot.get_group_member_list(group_id=gid, self_id=int(bot.self_id))
-        v = re.match("随个([男女]?)群友", str(event.get_message())).group(1)
-        if v == '男':
-            for member in glst[:]:
-                if member['sex'] != 'male':
-                    glst.remove(member)
-        elif v == '女':
-            for member in glst[:]:
-                if member['sex'] != 'female':
-                    glst.remove(member)
-        m = random.choice(glst)
-        await random_person.finish(Message([
+def song_txt(music: Music):
+    return Message([
         {
-            "type": "text",
+            "type": "image",
             "data": {
-                "text": f"▾ To "
+                "file": f"https://www.diving-fish.com/covers/{music.id}.jpg"
             }
         },
         {
-            "type": "at",
+            "type": "text",
             "data": {
-                "qq": event.user_id
+                "text": f"♪ {music.id} ({music.type})\n"
             }
-        }, 
+        },
         {
             "type": "text",
             "data": {
-                "text": f" | 随人\n{m['card'] if m['card'] != '' else m['nickname']}({m['user_id']})"
+                "text": f"{music.title}"
             }
-        }]))
-    except AttributeError:
-        await random_person.finish("你不在群聊使用.....所以你随啥呢这是，这个要去群里用。")
+        },
+        {
+            "type": "text",
+            "data": {
+                "text": f"\n分类: {music.genre}\n等级: {' ▸ '.join(music.level)}"
+            }
+        }
+    ])
 
-snmb = on_regex("^随个")
 
-@snmb.handle()
+def inner_level_q(ds1, ds2=None):
+    result_set = []
+    diff_label = ['Bas', 'Adv', 'Exp', 'Mst', 'ReM']
+    if ds2 is not None:
+        music_data = total_list.filter(ds=(ds1, ds2))
+    else:
+        music_data = total_list.filter(ds=ds1)
+    for music in sorted(music_data, key = lambda i: int(i['id'])):
+        for i in music.diff:
+            result_set.append((music['id'], music['title'], music['ds'][i], diff_label[i], music['level'][i]))
+    return result_set
+
+
+inner_level = on_command('inner_level ', aliases={'定数查歌 '})
+
+
+@inner_level.handle()
 async def _(bot: Bot, event: Event, state: T_State):
+    argv = str(event.get_message()).strip().split(" ")
+    if len(argv) > 2 or len(argv) == 0:
+        await inner_level.finish("命令格式为\n定数查歌 <定数>\n定数查歌 <定数下限> <定数上限>")
+        return
+    if len(argv) == 1:
+        result_set = inner_level_q(float(argv[0]))
+        s = f"▾ 定数查歌结果 定数: {float(argv[0])}"
+    else:
+        result_set = inner_level_q(float(argv[0]), float(argv[1]))
+        s = f"▾ 定数查歌结果 定数: {float(argv[0])} - {float(argv[1])}"
+    if len(result_set) > 50:
+        await inner_level.finish(f"结果过多（{len(result_set)} 条），请缩小搜索范围。")
+        return
+    resultnum = 0
+    for elem in result_set:
+        resultnum += 1
+        s += f"\nNo: {resultnum} | ID {elem[0]} >\n{elem[1]} {elem[3]} {elem[4]}({elem[2]})"
+    await inner_level.finish(s.strip())
+
+
+pandora_list = ['我觉得您打白潘不如先去打一下白茄子。', '别潘了，别潘了，滴蜡熊快被潘跑了。', '没有精神！！转圈掉的那么多还想打15!!', '在您玩白潘之前，请您先想一下：截止2021/9，国内SSS+ 4人，SSS 18人，SS 69人。这和您有关吗？不，一点关系都没有。', '潘你🐎', '机厅老板笑着管你收砸坏键子的损失费。', '潘小鬼是吧？', '你不许潘了！']
+spec_rand = on_regex(r"^随个(?:dx|sd|标准)?[绿黄红紫白]?[0-9]+\+?")
+
+
+@spec_rand.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    nickname = event.sender.nickname
+    level_labels = ['绿', '黄', '红', '紫', '白']
+    regex = "随个((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?)"
+    res = re.match(regex, str(event.get_message()).lower())
     try:
-        mt = event.message_type
-        if mt == "guild":
-            await snmb.finish(Message([
-                {"type": "text", "data": {"text": "随你"}},
-                {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
-            ]))
-        gid = event.group_id
-        if random.random() < 0.5:
-            await snmb.finish(Message([
-                {"type": "text", "data": {"text": "随你"}},
-                {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
-            ]))
+        if res.groups()[0] == "dx":
+            tp = ["DX"]
+        elif res.groups()[0] == "sd" or res.groups()[0] == "标准":
+            tp = ["SD"]
         else:
-            glst = await bot.get_group_member_list(group_id=gid, self_id=int(bot.self_id))
-            m = random.choice(glst)
-            await random_person.finish(Message([
-            {
+            tp = ["SD", "DX"]
+        level = res.groups()[2]
+        if res.groups()[1] == "":
+            music_data = total_list.filter(level=level, type=tp)
+        else:
+            music_data = total_list.filter(level=level, diff=['绿黄红紫白'.index(res.groups()[1])], type=tp)
+        if len(music_data) == 0:
+            rand_result = f'{nickname}，最低是1，最高是15，您这整了个{level}......故意找茬的吧？'
+        else:
+            rand_result = f'▾ To {nickname} | Rand Track\n' + song_txt(music_data.random())
+            if level == '15':
+                rand_result += "\n\nPandora:\n" + pandora_list[random.randint(0,7)]
+        await spec_rand.send(rand_result)
+    except Exception as e:
+        print(e)
+        await spec_rand.finish(f"▿ Bug Check\n随机命令出现了问题。\n[Exception Occurred]\n{e}")
+        
+mr = on_regex(r".*maimai.*什么")
+
+
+@mr.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    await mr.finish(song_txt(total_list.random()))
+
+
+spec_rand_multi = on_regex(r"^随([1-9]\d*)首(?:dx|sd|标准)?[绿黄红紫白]?[0-9]+\+?[至]?([0-9]+\+?)?")
+
+@spec_rand_multi.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    nickname = event.sender.nickname
+    level_labels = ['绿', '黄', '红', '紫', '白']
+    regex = "随([1-9]\d*)首((?:dx|sd|标准))?([绿黄红紫白]?)([0-9]+\+?)([至]?)([0-9]+\+?)?"   
+    res = re.match(regex, str(event.get_message()).lower())
+    cf_list = [f'国行DX最多就四首，所以我们不能随{res.groups()[0]}首。', f'如果你真的想打{res.groups()[0]}首歌还不喘气的话，你应该去霓虹打超新超热去，这最多就4首，你要不要吧！╰(艹皿艹 )', f'这个指令不能对日本玩家服务....这里只能支持四首，{res.groups()[0]}首真的太多了。']
+    try:
+        if int(res.groups()[0]) > 4:
+            rand_result = cf_list[random.randint(0,2)]
+            await spec_rand_multi.send(rand_result)
+        else:
+            if res.groups()[3] == '15' and res.groups()[4] is None:
+                rand_result = f'▿ Rand Tracks Error | Lv 15\nWDNMD....{res.groups()[0]}首白潘是吧？\n(╯‵□′)╯︵┻━┻\n 自己查 834 去！！'
+                await spec_rand_multi.send(rand_result)
+            else:
+                rand_result = f'▾ To {nickname} | Rand Tracks\n'
+                for i in range(int(res.groups()[0])):
+                    if res.groups()[1] == "dx":
+                        tp = ["DX"]
+                    elif res.groups()[1] == "sd" or res.groups()[0] == "标准":
+                        tp = ["SD"]
+                    else:
+                        tp = ["SD", "DX"]
+                    if res.groups()[4] is not None:
+                        level = [res.groups()[3], res.groups()[5]]
+                    else:
+                        level = res.groups()[3]
+                    if res.groups()[2] == "":
+                        music_data = total_list.filter(level=level, type=tp)
+                    else:
+                        music_data = total_list.filter(level=level, diff=['绿黄红紫白'.index(res.groups()[2])], type=tp)
+                    if len(music_data) == 0:
+                        rand_result = f'{nickname}，最低是1，最高是15，您这整了个{level}......故意找茬的吧？\n <(* ￣︿￣)'
+                    else:
+                        rand_result += f'\n----- Track {i + 1} / {res.groups()[0]} -----\n' + song_txt(music_data.random())
+                await spec_rand_multi.send(rand_result)
+    except Exception as e:
+        print(e)
+        await spec_rand_multi.finish(f"▿ Bug Check\n多歌曲随机命令出现了问题。\n[Exception Occurred]\n{e}")
+
+
+search_music = on_regex(r"^查歌.+")
+
+
+@search_music.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "查歌(.+)"
+    name = re.match(regex, str(event.get_message())).groups()[0].strip()
+    if name == "":
+        return
+    res = total_list.filter(title_search=name)
+    if len(res) == 0:
+        await search_music.send("▿ 无匹配乐曲\n没有找到这样的乐曲。")
+    elif len(res) < 50:
+        search_result = "▾ 搜索结果"
+        resultnum = 0
+        for music in sorted(res, key = lambda i: int(i['id'])):
+            resultnum += 1
+            search_result += f"\nNo: {resultnum} | ♪ {music['id']} >\n{music['title']}"
+        await search_music.finish(Message([
+            {"type": "text",
+                "data": {
+                    "text": search_result.strip()
+                }}]))
+    else:
+        await search_music.send(f"▿ 搜索结果过多\n结果太多啦...一共我查到{len(res)} 条符合条件的歌!\n缩小一下查询范围吧。")
+
+
+query_chart = on_regex(r"^([绿黄红紫白]?)id([0-9]+)")
+
+
+@query_chart.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "([绿黄红紫白]?)id([0-9]+)"
+    groups = re.match(regex, str(event.get_message())).groups()
+    level_labels = ['绿', '黄', '红', '紫', '白']
+    if groups[0] != "":
+        try:
+            level_index = level_labels.index(groups[0])
+            level_name = ['Basic', 'Advanced', 'Expert', 'Master', 'Re:Master']
+            name = groups[1]
+            music = total_list.by_id(name)
+            chart = music['charts'][level_index]
+            ds = music['ds'][level_index]
+            level = music['level'][level_index]
+            stats = music['stats'][level_index]
+            try:
+                tag = stats['tag']
+            except:
+                tag = "Insufficient Difficulty Data"
+            file = f"https://www.diving-fish.com/covers/{music['id']}.jpg"
+            if len(chart['notes']) == 4:
+                msg = f'''------ {level_name[level_index]} ------
+Lv {level} ▸ {ds} | {tag}
+Note Designer: {chart['charter']}
+Notes Details:
+All Notes: {chart['notes'][0] + chart['notes'][1] + chart['notes'][2] + chart['notes'][3]}
+Tap: {chart['notes'][0]} | Hold: {chart['notes'][1]} | Slide: {chart['notes'][2]}
+Touch: -- | Break: {chart['notes'][3]}'''
+            else:
+                msg = f'''------ {level_name[level_index]} ------
+Lv {level} ▸ {ds} | {tag}
+Note Designer: {chart['charter']}
+Notes Details:
+All Notes: {chart['notes'][0] + chart['notes'][1] + chart['notes'][2] + chart['notes'][3] + chart['notes'][4]}
+Tap: {chart['notes'][0]} | Hold: {chart['notes'][1]} | Slide: {chart['notes'][2]}
+Touch: {chart['notes'][3]} | Break: {chart['notes'][4]}'''
+            await query_chart.send(Message([
+                {
                     "type": "text",
                     "data": {
-                        "text": f"▾ To "
+                        "text": f"▾ 谱面详细信息\n"
+                    }
+                },
+                {
+                    "type": "image",
+                    "data": {
+                        "file": f"{file}"
+                    }
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"♪ {music['id']} ({music['type']})\n"
+                    }
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"{music['title']}\n"
+                    }
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": msg
+                    }
                 }
-            },
-            {
-                "type": "at",
-                "data": {
-                    "qq": event.user_id
-                }
-            },
-            {
-                "type": "text",
-                "data": {
-                    "text": f" | 随人\n{m['card'] if m['card'] != '' else m['nickname']}({m['user_id']})"
-                }
-            }]))
-    except AttributeError:
-        await random_person.finish("你不在群聊使用.....所以你随啥呢这是，这个要去群里用。")
-
-
-select = on_command("帮选", aliases={"帮我选"})
-@select.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    argv = str(event.get_message()).strip().split(" ")
-    if len(argv) == 1:
-        await select.finish("▿ 帮选 - 参数不足\n选你🐎。")
-        return
-    elif len(argv) is not None:
-        result = random.randint(0, len(argv) - 1)
-        await select.finish(f"▾ 帮选\n我选 {argv[result]}。")
-        return
+            ]))
+        except Exception as e:
+            await query_chart.send(f"▿ 无匹配乐曲\n我没有找到该谱面，或者当前此歌曲刚刚上线，部分数据残缺。如果是后者等等再试试吧！\n[Exception Occurred]\n{e}")
     else:
-        await select.finish("▿ 帮选 - 无参数\n选你🐎。")
-        return
-
-plp_settings = on_command("漂流瓶设置")
-
-@plp_settings.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    argv = str(event.get_message()).strip().split(" ")
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    now = datetime.datetime.now()
-    nowtime = (now.year * 31104000) + (now.month * 2592000) + (now.day * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second
-    c = await db.cursor()
-    mt = event.message_type
-    if mt == "guild":
-        await plp_settings.finish("▿ 漂流社区设置\n暂不支持频道的漂流瓶设置。")
-        return
-    try:
-        if len(argv) == 3:
-            success = 400
-            group_members = await bot.get_group_member_list(group_id=argv[2])
-            for m in group_members:
-                if m['user_id'] == event.user_id:
-                    success = 0
-                    break
-            if success != 0:
-                await plp_settings.finish("▿ 漂流社区设置\n请检查您输入的群号，您不在此群或输错了号码。")
-                return
-            elif m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in Config.superuser:
-                await plp_settings.finish("▿ 漂流社区设置\n请检查您输入的群号，您不是此群管理员或您输错了号码。")
-                return
-        else:
-            group_members = await bot.get_group_member_list(group_id=event.group_id)
-            for m in group_members:
-                if m['user_id'] == event.user_id:
-                    break
-            if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in Config.superuser:
-                await plp_settings.finish("▿ 漂流社区设置\n这个...只有管理员可以设置漂流社区。")
-                return
-    except Exception as e:
-        await plp_settings.finish(f"▿ 漂流社区设置 - 现在是私聊？\n群的瓶子开关在私聊是无法设置的，或您输入了错误的群号(犽不在这个群)。\n如果需要在私聊处理成员的拉黑，您需要在命令后面添加犽所在群号以便查验您是否为管理员。\n请在如果不是私聊，看下下面的错误记录。\n[Exception Occurred]\n{e}")
-        return
-    try:
-        if argv[0] == "完全启用":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disableinsert=0,disabletake=0,disablereply=0 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await plp_insert.finish(f"▿ To {nickname} | 漂流社区设置 - 限制人员功能\n您输入的 ID 没有在限制名单内。")
-                else:
-                    await c.execute(f"delete from plp_blacklist_table where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "完全禁用":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},1,1,1,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disableinsert=1,disabletake=1,disablereply=1 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into plp_blacklist_table values ({argv[1]},{event.user_id},1,1,1)')
-                else:
-                    await c.execute(f"update plp_blacklist_table set lastbanner={event.user_id},disableinsert=1,disabletake=1,disablereply=1 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "启用扔瓶子":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disableinsert=0 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await plp_insert.finish(f"▿ To {nickname} | 漂流社区设置 - 限制人员功能\n您输入的 ID 没有在限制名单内。")
-                else:
-                    await c.execute(f"update plp_blacklist_table set disableinsert=0 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "禁用扔瓶子":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},1,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disableinsert=1 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into plp_blacklist_table values ({argv[1]},{event.user_id},1,0,0)')
-                else:
-                    await c.execute(f"update plp_blacklist_table set lastbanner={event.user_id},disableinsert=1 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "启用捞瓶子":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disabletake=0 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await plp_insert.finish(f"▿ To {nickname} | 漂流社区设置 - 限制人员功能\n您输入的 ID 没有在限制名单内。")
-                else:
-                    await c.execute(f"update plp_blacklist_table set disabletake=0 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "禁用捞瓶子":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,1,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disabletake=1 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into plp_blacklist_table values ({argv[1]},{event.user_id},0,1,0)')
-                else:
-                    await c.execute(f"update plp_blacklist_table set lastbanner={event.user_id},disabletake=1 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "启用回复":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disablereply=0 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await plp_insert.finish(f"▿ To {nickname} | 漂流社区设置 - 限制人员功能\n您输入的 ID 没有在限制名单内。")
-                else:
-                    await c.execute(f"update plp_blacklist_table set disablereply=0 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "禁用回复":
-            if len(argv) == 1:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,1,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set disablereply=1 where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            else:
-                await c.execute(f'select * from plp_blacklist_table where id={argv[1]}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into plp_blacklist_table values ({argv[1]},{event.user_id},0,0,1)')
-                else:
-                    await c.execute(f"update plp_blacklist_table set lastbanner={event.user_id},disablereply=1 where id={argv[1]}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 限制人员功能\n对象 {argv[1]} 已成功设置为: {argv[0]}")
-        elif argv[0] == "启用慢速":
-            try:
-                if len(argv) == 1:
-                    time = 60
-                else:
-                    time = argv[1]
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,1,{argv[0]},{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set slowmode=1 where group_id={event.group_id}")
-                    await c.execute(f"update group_plp_table set limited={time} where group_id={event.group_id}")
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                    await db.commit()
-                    await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}\n命令冷却时间: {time} 秒。\n请注意: 扔瓶子、捞瓶子、回复瓶子共享一个冷却时间。")
-            except Exception as e:
-                pass
-        elif argv[0] == "禁用慢速":
-            try:
-                await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-                data = await c.fetchone()
-                if data is None:
-                    await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,0,{nowtime})')
-                else:
-                    await c.execute(f"update group_plp_table set slowmode=0 where group_id={event.group_id}")
-                    await c.execute(f"update group_plp_table set limited=0 where group_id={event.group_id}")
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                await db.commit()
-                await plp_insert.finish(f"▾ To {nickname} | 漂流社区设置 - 完成\n已成功设置为: {argv[0]}")
-            except Exception as e:
-                pass
-        else:
-            await plp_settings.send(f"▾ To {nickname} | 漂流社区设置 - 帮助\n格式为:漂流瓶设置 <完全启（禁）用/禁（启）用扔瓶子/禁（启）用捞瓶子/禁（启）用回复/启（禁）用慢速[仅群聊可用]> <(需要进行操作的)QQ号/间隔时长[单位:秒，选择慢速可用，不输入默认 60 秒]> <所在的群号(私聊情况下需要填写)>\n在不填写QQ号的情况下，默认是对您所在群的功能开关；填写QQ号后，转换为对此QQ号的功能开关。\n只能在处理QQ号时使用私聊。\n注意：慢速模式在私聊模式不生效且不回复，另外扔瓶子、捞瓶子、回复瓶子共享一个冷却时间。")
-            return
-    except Exception as e:
-        pass
-    
-
-plp_insert = on_command("扔瓶子")
-
-@plp_insert.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    argv = str(event.get_message()).strip().split(" ")
-    now = datetime.datetime.now() 
-    nowtime = (now.year * 31104000) + (now.month * 2592000) + (now.day * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    c = await db.cursor()
-    mt = event.message_type
-    user = event.user_id
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await plp_reply.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    try:
-        await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-        data = await c.fetchone()
-        if data is None:
-            await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,{nowtime})')
-            await db.commit()
-        else:
-            if data[1] == 1:
-                await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 扔瓶子 - 错误\n管理员已禁用扔瓶子功能，请联系群管理员获得详情。")
-                return
-            elif data[4] == 1:
-                limit = int(data[5]) + int(data[6])
-                if nowtime < limit:
-                    await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 冷却中\n现在正在冷却时间，群管理设置的冷却时间: {data[5]} 秒。请稍后再试。")
-                    return
-                else:
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                    await db.commit()
-    except Exception as e:
-        pass
-    try:
-        await c.execute(f'select * from plp_blacklist_table where id={user}')
-        data = await c.fetchone()
-        if data is None:
-            pass
-        else:
-            if data[2] == 1:
-                await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 扔瓶子 - 错误\n您的扔瓶子功能已被限制使用。")
-                return
-    except Exception:
-        pass
-    plpid = now.year * random.randint(1,7200) + now.month * random.randint(1,4800) + now.day * random.randint(1,2400) + now.hour * random.randint(1,1200)+ now.minute * random.randint(1,600) + now.second * random.randint(1,300) + random.randint(1,9999999999)
-    try:
-        if len(argv) > 1:
-            allmsg = ""
-            for i in range(len(argv)):
-                allmsg += f"{argv[i]}"
-            argv[0] = allmsg
-        elif len(argv) == 1 and argv[0] == "":
-            await plp_insert.send(f"▾ To {nickname} | 漂流社区: 扔瓶子 - 帮助\n格式为:扔瓶子 瓶子内容.\n禁止发送黄赌毒、个人收款码等不允许发送的内容。否则将禁止个人使用此功能。")
-            return
-        elif argv[0].find("|") != -1:
-            await plp_insert.send(f"▿ To {nickname} | 漂流社区: 扔瓶子 - 错误\n请不要在发送内容中加'|'，会干扰漂流瓶功能。")
-            return
-        if argv[0].find("CQ:image") != -1:
-            message = argv[0].split("[")
-            msg = message[0]
-            piclink = message[1][57:].split("]")
-            await c.execute(f'insert into plp_table values ({plpid},{user},"{nickname}","{msg}|{piclink[0]}",1,0,0)')
-            await db.commit()
-            await plp_insert.finish(f"▾ To {nickname} | 漂流社区: 扔瓶子 - 完成\n您的 图片 漂流瓶(ID: {plpid})已经扔出去啦!\n请注意: 如果您的瓶子包含了 R-18 (包括擦边球）以及任何不应在漂流瓶内出现的内容，您可能会受到漂流社区的部分功能封禁或相应处置。如果需要撤回瓶子，请使用 “删瓶子” 指令。")
-            return
-        else:
-            await c.execute(f'insert into plp_table values ({plpid},{user},"{nickname}","{argv[0]}",0,0,0)')
-            await db.commit()
-            await plp_insert.finish(f"▾ To {nickname} | 漂流社区: 扔瓶子 - 完成\n您的 文字 漂流瓶(ID: {plpid})已经扔出去啦!\n请注意: 如果您的瓶子包含了不应在漂流瓶内出现的内容，您可能会受到漂流社区的部分功能封禁或相应处置。如果需要撤回瓶子，请使用 “删瓶子” 指令。")
-            return
-    except Exception as e:
-        pass
-
-plp_find = on_command("捞瓶子")
-
-@plp_find.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    argv = str(event.get_message()).strip().split(" ")
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    now = datetime.datetime.now()
-    nowtime = (now.year * 31104000) + (now.month * 2592000) + (now.day * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second
-    c = await db.cursor()
-    mt = event.message_type
-    user = event.user_id
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await plp_reply.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    try:
-        await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-        data = await c.fetchone()
-        if data is None:
-            await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,{nowtime})')
-            await db.commit()
-        else:
-            if data[2] == 1:
-                await plp_find.send(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 错误\n管理员已禁用捞瓶子功能，请联系群管理员获得详情。")
-                return
-            elif data[4] == 1:
-                limit = int(data[5]) + int(data[6])
-                if nowtime < limit:
-                    await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 冷却中\n现在正在冷却时间，群管理设置的冷却时间: {data[5]} 秒。请稍后再试。")
-                    return
-                else:
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                    await db.commit()
-    except Exception as e:
-        pass
-    try:
-        await c.execute(f'select * from plp_blacklist_table where id={user}')
-        data = await c.fetchone()
-        if data is None:
-            pass
-        else:
-            if data[3] == 1:
-                await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 扔瓶子 - 错误\n您的捞瓶子功能已被限制使用。")
-                return
-    except Exception:
-        pass
-    try:
-        if len(argv) > 1:
-            await plp_find.finish(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 错误\n只能输入QQ号查找。您输入了好多条分段数据.....")
-        elif argv[0] == "":
-            await c.execute(f'select * from plp_table order by random() limit 1')
-            data = await c.fetchone()
-            if data is None:
-                await plp_find.finish(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 没有瓶子\n啊呀....小犽这目前一个瓶子都莫得。要不先扔一个看看？")
-                return
-            else:
-                if data[4] == 0:
-                    await plp_find.send(f"▾ To {nickname} | 漂流社区: 瓶子\nID: {data[0]} | {data[2]}({data[1]})\n👓 {data[5] + 1} | 💬 {data[6]}\n{data[3]}")
-                    await c.execute(f"update plp_table set view={data[5] + 1} where id={data[0]}")
-                    await db.commit()
-                    return
-                else:
-                    message = data[3].split("|")
-                    await plp_find.send(Message([
-                        MessageSegment.text(f"▾ To {nickname} | 漂流社区: 瓶子\nID: {data[0]} | {data[2]}({data[1]})\n👓 {data[5] + 1} | 💬 {data[6]}\n{message[0]}"),
-                        MessageSegment.image(f"{message[1]}")    
-                    ]))
-                    await c.execute(f"update plp_table set view={data[5] + 1} where id={data[0]}")
-                    await db.commit()
-                    return
-        else:
-            await c.execute(f'select * from plp_table where user_id={argv[0]}')
-            data = await c.fetchall()
-            if len(data) == 0:
-                await c.execute(f'select * from plp_table where id={argv[0]}')
-                data = await c.fetchone()
-                if data is None:
-                    await plp_find.finish(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 错误\n您输入的 QQ 号码没有扔瓶子或您输入的漂流瓶 ID 不存在。")
-                    return
-                else:
-                    if data[4] == 0:
-                        msg1 = f"▾ To {nickname} | 漂流社区: 瓶子 - 定向 ID 查找: {argv[0]}\n{data[2]}({data[1]})\n👓 {data[5] + 1} | 💬 {data[6]}\n{data[3]}"
-                        await plp_find.send(msg1)
-                        await c.execute(f"update plp_table set view={data[5] + 1} where id={data[0]}")
-                        await db.commit()
-                        return
-                    else:
-                        message = data[3].split("|")
-                        await plp_find.send(Message([
-                            MessageSegment.text(f"▾ To {nickname} | 漂流社区: 瓶子 - 定向 ID 查找: {argv[0]}\n{data[2]}({data[1]})\n👓 {data[5] + 1} | 💬 {data[6]}\n{message[0]}"),
-                            MessageSegment.image(f"{message[1]}")
-                        ]))
-                        await c.execute(f"update plp_table set view={data[5] + 1} where id={data[0]}")
-                        await db.commit()
-                        return
-            else:
-                msg = f"▾ To {nickname} | 漂流社区: 瓶子 - 定向 QQ 查找: {data[0][2]}({argv[0]})"
-                if len(data) > 5:
-                    msg += "\nta 扔的瓶子太多了，只显示最新四条消息。"
-                    for i in range(len(data) - 4, len(data)):
-                        if data[i][4] == 0:
-                            msg += f"\n--------第 {i + 1} 条--------\nID: {data[i][0]}\n👓 {data[i][5] + 1} | 💬 {data[i][6]}\n{data[i][3]}"
-                            await c.execute(f"update plp_table set view={data[i][5] + 1} where id={data[i][0]}")
-                        else:
-                            message = data[i][3].split("|")
-                            msg += f"\n--------第 {i + 1} 条--------\nID: {data[i][0]}\n👓 {data[i][5] + 1} | 💬 {data[i][6]}\n{message[0]}\n[定向 QQ 查找不支持显示图片，您需要点击链接查看]\n{message[1]}"
-                            await c.execute(f"update plp_table set view={data[i][5] + 1} where id={data[i][0]}")
-                else:
-                    for i in range(len(data)):
-                        if data[i][4] == 0:
-                            msg += f"\n--------第 {i + 1} 条--------\nID: {data[i][0]}\n👓 {data[i][5] + 1} | 💬 {data[i][6]}\n{data[i][3]}"
-                            await c.execute(f"update plp_table set view={data[i][5] + 1} where id={data[i][0]}")
-                        else:
-                            message = data[i][3].split("|")
-                            msg += f"\n--------第 {i + 1} 条--------\nID: {data[i][0]}\n👓 {data[i][5] + 1} | 💬 {data[i][6]}\n{message[0]}\n[定向 QQ 查找不支持显示图片，您需要点击链接查看]\n{message[1]}"
-                            await c.execute(f"update plp_table set view={data[i][5] + 1} where id={data[i][0]}")
-                await plp_find.send(msg)
-                await db.commit()
-    except Exception as e:
-        pass
-
-plp_clean = on_command("洗瓶子", rule=to_me())
-
-@plp_clean.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    c = await db.cursor()
-    if str(event.user_id) not in Config.superuser:
-        await plp_clean.finish(f"▿ To {nickname} | 漂流社区: 洗瓶子 - 没有权限\n这个...只有恋萌萌的管理员才可以清空瓶子。")
-        return
-    else:
-        await c.execute(f'delete from plp_table')
-        await c.execute(f'delete from plp_reply_table')
-        await db.commit()
-        await plp_clean.finish(f"▾ To {nickname} | 漂流社区: 洗瓶子\n已清空漂流瓶数据。")
-        return
-
-plp_reply = on_command("回复瓶子")
-
-@plp_reply.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    now = datetime.datetime.now()
-    nowtime = (now.year * 31104000) + (now.month * 2592000) + (now.day * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second
-    c = await db.cursor()
-    argv = str(event.get_message()).strip().split(" ")
-    mt = event.message_type
-    user = event.user_id
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await plp_reply.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    try:
-        await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-        data = await c.fetchone()
-        if data is None:
-            await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,{nowtime})')
-            await db.commit()
-        else:
-            if data[3] == 1:
-                await plp_reply.send(f"▿ To {nickname} | 漂流社区: 回复瓶子 - 错误\n管理员已禁用瓶子评论回复功能，请联系群管理员获得详情。")
-                return
-            elif data[4] == 1:
-                limit = int(data[5]) + int(data[6])
-                if nowtime < limit:
-                    await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 冷却中\n现在正在冷却时间，群管理设置的冷却时间: {data[5]} 秒。请稍后再试。")
-                    return
-                else:
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                    await db.commit()
-    except Exception as e:
-        pass
-    try:
-        await c.execute(f'select * from plp_blacklist_table where id={user}')
-        data = await c.fetchone()
-        if data is None:
-            pass
-        else:
-            if data[4] == 1:
-                await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 扔瓶子 - 错误\n您的瓶子评论回复功能已被限制使用。")
-                return
-    except Exception:
-        pass
-    try:
-        if len(argv) > 2 or len(argv) == 1 and argv[0] != "帮助":
-            await plp_reply.finish(f"▿ To {nickname} | 漂流社区: 回复瓶子 - 错误\n参数输入有误。请参阅 “回复瓶子 帮助”")
-        elif argv[0] == "帮助":
-            await plp_reply.finish(f"▿ To {nickname} | 漂流社区: 回复瓶子 - 帮助\n命令格式是:\n回复瓶子 瓶子ID 回复内容\n注意回复无法带图片。")
-        else:
-            await c.execute(f'select * from plp_table where id={argv[0]}')
-            data = await c.fetchone()
-            if data is None:
-                await plp_reply.finish(f"▿ To {nickname} | 漂流社区: 回复瓶子 - 错误\n没有这个瓶子捏。")
-                return
-            else:
-                if argv[1].find("CQ:image") != -1:
-                    await plp_reply.finish(f"▿ To {nickname} | 漂流社区: 回复瓶子 - 错误\n漂流瓶回复中不可以夹带图片！")
-                    return
-                else:
-                    replyid = int(data[0] / random.randint(1,random.randint(199,9999)) * random.randint(random.randint(1,97), random.randint(101,199)))
-                    await c.execute(f'insert into plp_reply_table values ({replyid},{argv[0]},{user},"{nickname}","{argv[1]}")')
-                    await c.execute(f'update plp_table set reply={data[6] + 1} where id={argv[0]}')
-                    await db.commit()
-                    await plp_reply.finish(f"▾ To {nickname} | 漂流社区: 回复瓶子\n已成功回复 ID 是 {argv[0]} 的漂流瓶。")
-    except Exception as e:
-        pass
-
-
-plp_reply_view = on_command("看回复")
-
-@plp_reply_view.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    now = datetime.datetime.now()
-    nowtime = (now.year * 31104000) + (now.month * 2592000) + (now.day * 86400) + (now.hour * 3600) + (now.minute * 60) + now.second
-    c = await db.cursor()
-    argv = str(event.get_message()).strip().split(" ")
-    mt = event.message_type
-    user = event.user_id
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await plp_reply_view.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    try:
-        await c.execute(f'select * from group_plp_table where group_id={event.group_id}')
-        data = await c.fetchone()
-        if data is None:
-            await c.execute(f'insert into group_plp_table values ({event.group_id},0,0,0,0,{nowtime})')
-            await db.commit()
-        else:
-            if data[3] == 1:
-                await plp_reply.send(f"▿ To {nickname} | 漂流社区: 回复 - 错误\n管理员已禁用瓶子评论回复功能，请联系群管理员获得详情。")
-                return
-            elif data[4] == 1:
-                limit = int(data[5]) + int(data[6])
-                if nowtime < limit:
-                    await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 冷却中\n现在正在冷却时间，群管理设置的冷却时间: {data[5]} 秒。请稍后再试。")
-                    return
-                else:
-                    await c.execute(f"update group_plp_table set time={nowtime} where group_id={event.group_id}")
-                    await db.commit()
-    except Exception as e:
-        pass
-    try:
-        await c.execute(f'select * from plp_blacklist_table where id={user}')
-        data = await c.fetchone()
-        if data is None:
-            pass
-        else:
-            if data[4] == 1:
-                await plp_insert.send(f"▿ To {nickname} | 漂流社区 - 扔瓶子 - 错误\n您的瓶子评论回复功能已被限制使用。")
-                return
-    except Exception:
-        pass
-    try:
-        if len(argv) > 1 or argv[0] == "":
-            await plp_reply_view.finish(f"▿ To {nickname} | 漂流社区: 回复 - 错误\n请输入漂流瓶 ID 来查看瓶子回复。")
-        else:
-            await c.execute(f'select * from plp_reply_table where plpid={argv[0]}')
-            data = await c.fetchall()
-            if len(data) == 0:
-                await plp_reply_view.finish(f"▾ To {nickname} | 漂流社区: 回复 - {argv[0]}\n现在这个瓶子一个评论都没有!来坐沙发吧。")
-            else:
-                msg = f"▾ To {nickname} | 漂流社区: 回复 - {argv[0]}"
-                for i in range(len(data)):
-                    msg += f'\n#{i + 1} | Reply ID: {data[i][0]}\n{data[i][3]}({data[i][2]}): {data[i][4]}'
-                await plp_reply_view.finish(msg)
-    except Exception as e:
-        pass
-
-plp_num = on_command("当前瓶子数量")
-
-@plp_num.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    c = await db.cursor()
-    await c.execute(f'select * from plp_table')
-    data = await c.fetchall()
-    await plp_num.finish(f"▾ To {nickname} | 漂流社区\n现在全社区共有 {len(data)} 个漂流瓶。")
-
-delete_plp = on_command("删瓶子")
-
-@delete_plp.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    db = get_driver().config.db
-    c = await db.cursor()
-    argv = str(event.get_message()).strip().split(" ")
-    mt = event.message_type
-    user = event.user_id
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await delete_plp.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    try:
+        name = groups[1]
+        music = total_list.by_id(name)
         try:
-            ids = event.get_session_id()
-        except:
-            pass
-        else:
-            if ids.startswith("group"):
-                group_members = await bot.get_group_member_list(group_id=event.group_id)
-                for m in group_members:
-                    if m['user_id'] == event.user_id:
-                        break
-                if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in Config.superuser:
-                    await c.execute(f'select * from plp_table where id={argv[0]}')
-                    data = await c.fetchone()
-                    if data is None:
-                        await delete_plp.finish("▿ 漂流社区\n找不到这个瓶子捏，看看您的 漂流瓶 ID 是否输入正确？")
-                        return
-                    else:
-                        if event.user_id == data[1]:
-                            await c.execute(f'delete from plp_table where id={argv[0]}')
-                            await c.execute(f'delete from plp_reply_table where plpid={argv[0]}')
-                            await db.commit()
-                            await delete_plp.finish(f"▾ 漂流社区 - 删除完成\n已删除 ID 是 {argv[0]} 的漂流瓶。")
-                            return
-                        else:
-                            await delete_plp.finish("▿ 漂流社区\n您没有相应的权限来删除此漂流瓶，您需要是管理员或您是瓶子发送者才有权限删除此瓶子。")
-                            return
-            else:
-                await c.execute(f'select * from plp_table where id={argv[0]}')
-                data = await c.fetchone()
-                if data is None:
-                    await delete_plp.finish("▿ 漂流社区\n找不到这个瓶子捏，看看您的 漂流瓶 ID 是否输入正确？")
-                    return
-                else:
-                    if user == data[1]:
-                        await c.execute(f'delete from plp_table where id={argv[0]}')
-                        await c.execute(f'delete from plp_reply_table where plpid={argv[0]}')
-                        await db.commit()
-                        await delete_plp.finish(f"▾ 漂流社区 - 删除完成\n已删除 ID 是 {argv[0]} 的漂流瓶。")
-                        return
-                    else:
-                        await delete_plp.finish("▿ 漂流社区\n您没有相应的权限来删除此漂流瓶，您需要是瓶子发送者才有权限删除此瓶子。如您是群管理员，请在群聊内使用此指令。")
-                        return
-    except Exception as e:
-        return
-    await c.execute(f'select * from plp_table where id={argv[0]}')
-    data = await c.fetchone()
-    if data is None:
-        await delete_plp.finish("▿ 漂流社区\n找不到这个瓶子捏，看看您的 漂流瓶 ID 是否输入正确？")
-        return
-    else:
-        await c.execute(f'delete from plp_table where id={argv[0]}')
-        await c.execute(f'delete from plp_reply_table where plpid={argv[0]}')
-        await db.commit()
-        await delete_plp.finish(f"▾ 漂流社区 - 删除完成\n已删除 ID 是 {argv[0]} 的漂流瓶。")
+            file = f"https://www.diving-fish.com/covers/{music['id']}.jpg"
+            await query_chart.send(Message([
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"▾ 歌曲详细信息\n"
+                    }
+                },
+                {
+                    "type": "image",
+                    "data": {
+                        "file": f"{file}"
+                    }
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"♪ {music['id']} ({music['type']})\n"
+                    }
+                }, 
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"{music['title']}\n"
+                    }
+                },  
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"艺术家: {music['basic_info']['artist']}\n分类: {music['basic_info']['genre']}\nBPM: {music['basic_info']['bpm']}\n版本: {music['basic_info']['from']}\n等级 [当前版本定数]:\n{' ▸ '.join(music['level'])}\n{' ▸'.join(str(music['ds']).split(','))}"
+                    }
+                }
+            ]))
+        except Exception as e:
+            await query_chart.send(f"▿ 无匹配乐曲\n啊这...我没有找到这个歌。\n换一个试试吧。\n[Exception Occurred]\n{e}")
 
-my_plp = on_command("我的漂流瓶")
+xp_list = ['滴蜡熊', '幸隐', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '排队区', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)']
 
-@my_plp.handle()
+jrxp = on_command('jrxp', aliases={'今日性癖'})
+
+
+@jrxp.handle()
 async def _(bot: Bot, event: Event, state: T_State):
+    qq = int(event.get_user_id())
+    nickname = event.sender.nickname
+    h = hash(qq)
+    rp = h % 100
+    xp = random.randint(0,24)
+    s = f"▾ 今日性癖\n{nickname}今天的性癖是{xp_list[xp]}，人品值是{rp}%.\n不满意的话再随一个吧！"
+    await jrxp.finish(Message([
+        {"type": "text", "data": {"text": s}}
+    ]))
+
+
+wm_list = ['拼机', '推分', '越级', '下埋', '夜勤', '练底力', '练手法', '打旧框', '干饭', '抓DX分', '收歌', '理论值', '打东方曲', '打索尼克曲']
+bwm_list_perfect = ['拆机:然后您被机修当场处决', '女装:怎么这么好康！（然后受到了欢迎）', '耍帅:看我耍帅还AP+', '击剑:Alea jacta est!(SSS+)', '打滴蜡熊:看我今天不仅推了分，还收了歌！', '日麻:看我三倍役满!!!你们三家全都起飞!!!', '出勤:不出则已，一出惊人，当场AP，羡煞众人。', '看手元:哦原来是这样！看了手元果真推分了。', '霸机:这么久群友都没来，霸机一整天不是梦！', '打Maipad: Maipad上收歌了，上机也收了。', '唱打: Let the bass kick! O-oooooooooo AAAAE-A-A-I-A-U- JO-oooooooooooo AAE-O-A-A-U-U-A- E-eee-ee-eee AAAAE-A-E-I-E-A- JO-ooo-oo-oo-oo EEEEO-A-AAA-AAAA O-oooooooooo AAAAE-A-A-I-A-U-......', '抓绝赞: 把把2600，轻松理论值！']
+bwm_list_bad = ['拆机:不仅您被机修当场处决，还被人尽皆知。', '女装:杰哥说你怎么这么好康！让我康康！！！（被堵在卫生间角落）', '耍帅:星星全都粉掉了......', '击剑:Alea jacta est!(指在线下真实击剑)', '打滴蜡熊:滴蜡熊打你。', '日麻:我居然立直放铳....等等..三倍役满??????', '出勤:当场分数暴毙，惊呆众人。', '看手元:手法很神奇，根本学不来。', '霸机:......群友曰:"霸机是吧？踢了！"', '打Maipad: 上机还是不大会......', '唱打: 被路人拍下上传到了某音。', '抓绝赞: 啊啊啊啊啊啊啊捏妈妈的我超！！！ --- 这是绝赞(好)的音效。']
+tips_list = ['在游戏过程中,请您不要大力拍打或滑动机器!', '建议您常多备一副手套！如果游玩时手套破裂或许会有大用！', '游玩时注意手指安全！意外戳到边框时若引发剧烈疼痛请立刻下机以休息手指，必要时可以选择就医。', '游玩过程中注意财物安全。自己的财物远比一个SSS+要更有价值。', '底力不够？建议下埋！不要强行越级，手癖难解。', '文明游玩，游戏要排队，不要做不遵守游戏规则的玩家！', '人品值和宜忌每天0点都会刷新，不喜欢总体运势可以通过这个指令再随一次。', '疫情防护，人人有责。在游玩结束后请主动佩戴口罩！', '出勤时注意交通安全，身体安全永远在第一位！', '迪拉熊不断吃绝赞？去找机修教训它。', '热知识：DX理论值是101.0000，但是旧框没有固定的理论值。', '冷知识：每个绝赞 Perfect 等级有 2600/2550/2500，俗称理论/50落/100落。']
+fx_list = ['东', '西', '南', '北']
+play_list = ['1P', '2P', '排队区']
+
+jrwm = on_command('今日运势', aliases={'今日舞萌'})
+
+@jrwm.handle()
+async def _(bot: Bot, event: Event, state: T_State):   
+    qq = int(event.get_user_id())
+    nickname = event.sender.nickname
+    h = hash(qq)
+    rp = h % 100
+    luck = hash(int((h * 4) / 3)) % 100
+    ap = hash(int(((luck * 100) * (rp) * (hash(qq) / 4 % 100)))) % 100
+    wm_value = []
+    good_value = {}
+    bad_value = {}
+    good_count = 0
+    bad_count = 0
+    dwm_value_1 = random.randint(0,11)
+    dwm_value_2 = random.randint(0,11)
+    tips_value = random.randint(0,11)
+    now = datetime.datetime.now()  
+    for i in range(14):
+        wm_value.append(h & 3)
+        h >>= 2
+    s = f"▾ To {nickname} | 运势\n◢ 时间\n{now.year}/{now.month}/{now.day} {now.hour}:{now.strftime('%M')}:{now.strftime('%S')}\n\n"
+    s += f"◢ 占卜\n---------------------\n"
+    if rp >= 50 and rp < 70 or rp >= 70 and rp < 90 and luck < 60:
+        s += "末吉: 稍微有那么一点小幸运！"
+    elif rp >= 70 and rp < 90 and luck >= 60 or rp >= 90 and luck < 80:
+        s += "吉: 好运连连，挡都挡不住~"
+    elif rp >= 90 and luck >= 80:
+        s += "大吉: 干点什么都会有惊喜发生！"
+    elif rp >= 10 and rp < 30 and luck < 40:
+        s += "凶: emm...粉了一串纵连。"
+    elif rp < 10 and luck < 10:
+        s += "大凶: 今天稍微有点倒霉捏。"
+    else:
+        s += "小凶: 有那么一丢丢的坏运气，不过不用担心捏。"
+    s += f"\n---------------------\n人品值: {rp}%  |  幸运值: {luck}%\n"
+    s += f"\n◢ 运势概览\n"
+    if dwm_value_1 == dwm_value_2:
+        s += f'平 ▷ 今天总体上平平无常。向北走有财运，向南走运不佳....等一下，这句话好像在哪儿听过？\n'
+    else:
+        s += f'宜 ▷ {bwm_list_perfect[dwm_value_1]}\n'
+        s += f'忌 ▷ {bwm_list_bad[dwm_value_2]}\n'
+    s += f"\n◢ 舞萌运势\n收歌指数: {ap}%\n最佳朝向: {fx_list[random.randint(0, 3)]}\n最佳游戏位置: {play_list[random.randint(0, 2)]}\n"
+    for i in range(14):
+        if wm_value[i] == 3:
+            good_value[good_count] = i
+            good_count = good_count + 1
+        elif wm_value[i] == 0:
+            bad_value[bad_count] = i
+            bad_count = bad_count + 1
+    if good_count == 0:
+        s += "宜 ▷ 诸事不宜"
+    else:
+        s += f'宜 ▷ 共 {good_count} 项:\n'
+        for i in range(good_count):
+            s += f'{wm_list[good_value[i]]} '
+    if bad_count == 0:
+        s += '\n忌 ▷ 无所畏忌\n'
+    else:
+        s += f'\n忌 ▷ 共 {bad_count} 项:\n'
+        for i in range(bad_count):
+            s += f'{wm_list[bad_value[i]]} '
+    s += f'\n\n◢ 犽的锦囊 - 运势版\nKiba 提示:\n{tips_list[tips_value]}\n'
+    s += "今日运势 - 锦囊推荐:\n"
+    music = total_list[hash(qq) * now.day * now.month % len(total_list)]
+    await jrwm.finish(Message([{"type": "text", "data": {"text": s}}] + song_txt(music)))
+
+jrrp = on_command('jrrp', aliases={'人品值'})
+
+@jrrp.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    qq = int(event.get_user_id())
+    nickname = event.sender.nickname
+    h = hash(qq)
+    rp = h % 100
+    luck = hash(int((h * 4) / 3)) % 100
+    ap = hash(int(((luck * 100) * (rp) * (hash(qq) / 4 % 100)))) % 100
+    s = f"▾ To {nickname} | 人品签\n----------------------\n"
+    s += f"人品值: {rp}%\n"
+    s += f"幸运度: {luck}%"
+    if rp >= 50 and rp < 70 or rp >= 70 and rp < 90 and luck < 60:
+        s += "            小吉!\n"
+    elif rp >= 70 and rp < 90 and luck >= 60 or rp >= 90 and luck < 80:
+        s += "             吉!\n"
+    elif rp >= 90 and luck >= 80:
+        s += "            大吉!\n"
+    elif rp >= 10 and rp < 30 and luck < 40:
+        s += "             凶!\n"
+    elif rp < 10 and luck < 10:
+        s += "            大凶!\n"
+    else:
+        s += "            小凶!\n"
+    s += f"收歌率: {ap}%\n----------------------\n更多请查看今日运势或今日性癖。"
+    await jrrp.finish(Message([
+        {"type": "text", "data": {"text": s}}
+    ]))
+
+jrgq = on_command('早', aliases={'签到', '晚上好', '上午好', '下午好', '中午好'})
+
+@jrgq.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    nickname = event.sender.nickname
+    day = datetime.datetime.now().day
+    hour = datetime.datetime.now().hour
+    mt = event.message_type
+    db = get_driver().config.db
+    sign = 1
+    c = await db.cursor()
+    if mt == "guild":
+        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+        data = await c.fetchone()
+        if data is None:
+            await jrgq.send(f"▿ To {nickname} | 签到 - 错误\n在频道内，签到前需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+            return
+        else:
+            qq = int(data[0])
+    else:
+        qq = int(event.get_user_id())
+    await c.execute(f'select * from sign_table')
+    data1 = await c.fetchone()
+    if data1 is None:
+        await c.execute(f'insert into sign_table values (1, {qq}, {day})')
+    else:
+        if day != data1[2]:
+            await c.execute(f'delete from sign_table')
+            await c.execute(f'insert into sign_table values (1, {qq}, {day})')
+        else:
+            await c.execute(f'select * from sign_table where id={qq}')
+            data2 = await c.fetchone()
+            if data2 is None:
+                await c.execute(f'select * from sign_table')
+                data3 = await c.fetchall()
+                if data3 == "":
+                    await c.execute(f'insert into sign_table values (1, {qq}, {day})')
+                else:
+                    await c.execute(f'insert into sign_table values ({len(data3) + 1}, {qq}, {day})')
+                    sign = len(data3) + 1
+            else:
+                await jrgq.finish(f"▿ To {nickname} | 签到 - 错误\n您貌似今天已经签过到啦！排名是第 {data2[0]} 位。")
+                return
+    await db.commit()
+    s = f"▾ To {nickname} | 签到\n"
+    if hour < 6:
+        s += "您起来的这么早吗？！还是熬夜啦......"
+    elif hour >= 6 and hour < 9:
+        s += "早上好呀！"
+    elif hour >= 9 and hour < 12:
+        s += "上午好呀！"
+    elif hour >= 12 and hour <= 18:
+        s += "下午好！！"
+    else:
+        s += "晚上好啊。"
+    h = hash(qq)
+    rp = h % 100
+    s += f"今天您的签到排名是第 {sign} 位。\n您人品值是 {rp}，为您推荐：\n"
+    music = total_list[(h * 4) % len(total_list)]
+    await jrgq.finish(Message([
+        {"type": "text", "data": {"text": s}}
+    ] + song_txt(music)))
+
+music_aliases = defaultdict(list)
+f = open('src/static/aliases.csv', 'r', encoding='utf-8')
+tmp = f.readlines()
+f.close()
+for t in tmp:
+    arr = t.strip().split('\t')
+    for i in range(len(arr)):
+        if arr[i] != "":
+            music_aliases[arr[i].lower()].append(arr[0])
+
+
+find_song = on_regex(r".+是什么歌")
+
+
+@find_song.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "(.+)是什么歌"
+    name = re.match(regex, str(event.get_message())).groups()[0].strip().lower()
+    nickname = event.sender.nickname
+    if name not in music_aliases:
+        await find_song.finish(f"▿ To {nickname} | 别名查歌 - 错误\n这个别称太新了，我找不到这首歌啦。\n但是您可以帮助我收集歌曲的别名！戳链接加入 Kiba 歌曲别名收集计划:\nhttps://kdocs.cn/l/cdzsTdqaPFye")
+        return
+    result_set = music_aliases[name]
+    if len(result_set) == 1:
+        music = total_list.by_title(result_set[0])
+        await find_song.finish(Message([{"type": "text", "data": {"text": f"▾ To {nickname} | 别名查歌\n您说的应该是：\n"}}] + song_txt(music)))
+    else:
+        s = '\n'.join(result_set)
+        await find_song.finish(f"▾ To {nickname} | 别名查歌 - 多个结果\n您要找的可能是以下歌曲中的其中一首：\n{ s }")
+
+
+query_score = on_command('分数线')
+
+
+@query_score.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    r = "([绿黄红紫白])(id)?([0-9]+)"
+    argv = str(event.get_message()).strip().split(" ")
+    nickname = event.sender.nickname
+    if len(argv) == 1 and argv[0] == '帮助':
+        s = '''▾ 分数线 - 帮助
+这个功能为你提供达到某首歌分数线的最低标准而设计的~~~
+命令格式：分数线 <难度+歌曲id> <分数线>
+例如：分数线 紫799 100
+命令将返回分数线允许的 TAP GREAT 容错以及 BREAK 50落等价的 TAP GREAT 数。
+以下为 TAP GREAT 的对应表：
+GREAT/GOOD/MISS
+TAP\t1/2.5/5
+HOLD\t2/5/10
+SLIDE\t3/7.5/15
+TOUCH\t1/2.5/5
+BREAK\t5/12.5/25(外加200落)'''
+        await query_score.send(Message([{
+            "type": "image",
+            "data": {
+                "file": f"base64://{str(image_to_base64(text_to_image(s)), encoding='utf-8')}"
+            }
+        }]))
+    elif len(argv) == 2:
+        try:
+            grp = re.match(r, argv[0]).groups()
+            level_labels = ['绿', '黄', '红', '紫', '白']
+            level_labels2 = ['Basic', 'Advanced', 'Expert', 'Master', 'Re:MASTER']
+            level_index = level_labels.index(grp[0])
+            chart_id = grp[2]
+            line = float(argv[1])
+            music = total_list.by_id(chart_id)
+            chart: Dict[Any] = music['charts'][level_index]
+            tap = int(chart['notes'][0])
+            slide = int(chart['notes'][2])
+            hold = int(chart['notes'][1])
+            touch = int(chart['notes'][3]) if len(chart['notes']) == 5 else 0
+            brk = int(chart['notes'][-1])
+            total_score = 500 * tap + slide * 1500 + hold * 1000 + touch * 500 + brk * 2500
+            break_bonus = 0.01 / brk
+            break_50_reduce = total_score * break_bonus / 4
+            reduce = 101 - line
+            if reduce <= 0 or reduce >= 101:
+                raise ValueError
+            await query_chart.send(f'''▾ To {nickname} | 分数线详情
+♪ {music['id']} ({music['type']}) | {level_labels2[level_index]}
+{music['title']}
+分数线 {line}% 参照表:
+----------------------
+此表格遵循的格式为:
+类型 | ACHV.损失/个 | 最多损失数
+----------------------
+Great 评价:
+Tap & Touch | {10000 / total_score:.4f}% | {(total_score * reduce / 10000):.2f}
+Hold | {(10000 / total_score)* 2:.4f}% | {((total_score * reduce / 10000)/ 2):.2f}
+Slide | {(10000 / total_score)* 3:.4f}% | {((total_score * reduce / 10000)/ 3):.2f}
+Good 评价:
+Tap & Touch | {(10000 / total_score)* 2.5:.4f}% | {((total_score * reduce / 10000)/ 2.5):.2f}
+Hold | {(10000 / total_score)* 5:.4f}% | {((total_score * reduce / 10000)/ 5):.2f}
+Slide | {(10000 / total_score)* 7.5:.4f}% | {((total_score * reduce / 10000)/ 7.5):.2f}
+Miss 评价:
+Tap & Touch | {(10000 / total_score)*5:.4f}% | {((total_score * reduce / 10000)/5):.2f}
+Hold | {(10000 / total_score)* 10:.4f}% | {((total_score * reduce / 10000)/ 10):.2f}
+Slide | {(10000 / total_score)* 15:.4f}% | {((total_score * reduce / 10000)/ 15):.2f}
+
+Break 各评价损失:
+注意: Break 的 Great 与 Perfect 评价都有细分等级，此表格的 Break Great 不做细分，仅为大约数供您参考。
+本谱面每个 Break Perfect 2600 的达成率是 {((10000 / total_score) * 25 + (break_50_reduce / total_score * 100)* 4):.4f}%,谱面共 {brk} 个 Break。
+----------------------
+此表格遵循的格式为:
+类型 | ACHV.损失/个 | Tap Great 等价数
+----------------------
+Perfect 2550 | {break_50_reduce / total_score * 100:.4f}% | {(break_50_reduce / 100):.3f}
+Perfect 2500 | {(break_50_reduce / total_score * 100)* 2:.4f}% | {(break_50_reduce / 100)* 2:.3f}
+Great | ≈{((10000 / total_score) * 5 + (break_50_reduce / total_score * 100)* 4):.4f}% | ≈{5 + (break_50_reduce / 100)* 4:.3f}
+Good | {((10000 / total_score) * 12.5 + (break_50_reduce / total_score * 100)* 4):.4f}% | {12.5 + (break_50_reduce / 100)* 4:.3f}
+Miss | {((10000 / total_score) * 25 + (break_50_reduce / total_score * 100)* 4):.4f}% | {25 + (break_50_reduce / 100)* 4:.3f}''')
+        except Exception:
+            await query_chart.send("格式错误，输入 “分数线 帮助” 以查看帮助信息")
+
+
+best_40_pic = on_command('b40', aliases={'B40'})
+
+
+@best_40_pic.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    username = str(event.get_message()).strip()
     nickname = event.sender.nickname
     mt = event.message_type
     db = get_driver().config.db
-    is_admin = 1
-    is_black = 1
-    baninsert = 1
-    banreply = 1
-    bantake = 1
-    msg = f"▾ To {nickname} | 我的漂流社区主页\n"
     c = await db.cursor()
-    try:
-        ids = event.get_session_id()
-    except:
-        pass
-    else:
-        user = event.user_id
+    if username == "":
         if mt == "guild":
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await my_plp.send(f"▿ To {nickname} | 漂流社区 - 错误\n在频道内，您需要绑定 QQ 号才可使用漂流社区。请进行绑定后再试一次。")
+                await best_50_pic.send(f"▿ To {nickname} | Best 40 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
-                user = data[0]
-        if ids.startswith("group"):
-            group_members = await bot.get_group_member_list(group_id=event.group_id)
-            for m in group_members:
-                if m['user_id'] == user:
-                    break
-            if m['role'] != 'owner' and m['role'] != 'admin':
-                is_admin = 0
-            if str(m['user_id']) in Config.superuser:
-                is_admin = 2
+                payload = {'qq': str(data[0])}
         else:
-            if str(user) in Config.superuser:
-                is_admin = 2
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': username}
+    try:
+        img, success = await generate(payload)
+    except Exception as e:
+        await best_40_pic.send(f"▿ To {nickname} | Best 40 - 生成失败\n[Exception Occurred]\n{e}\n请检查查分器是否已正确导入所有乐曲成绩。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    if success == 400:
+        await best_40_pic.send(f"▿ To {nickname} | Best 40 - 错误\n此玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+    elif success == 403:
+        await best_40_pic.send(f'▿ To {nickname} | Best 40 - 被禁止\n{username} 不允许使用此方式查询 Best 40。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后直接输入“b40”。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+    else:
+        if username == "":
+            text = f'▾ To {nickname} | Best 40\n您的 Best 40 如图所示。\n若您需要修改查分器数据，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/'
+        else:
+            text = f'▾ To {nickname} | Best 40 - 其他 ID 查询\n您查询的 ID: {username} 已找到。此 ID 的 Best 40 如图所示。\n'
+        await best_40_pic.send(Message([
+            MessageSegment.reply(event.message_id),
+            MessageSegment.text(text),
+            MessageSegment.image(f"base64://{str(image_to_base64(img), encoding='utf-8')}")
+        ]))
+
+best_50_pic = on_command('b50', aliases={'B50'})
+
+@best_50_pic.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    username = str(event.get_message()).strip()
+    nickname = event.sender.nickname
+    mt = event.message_type
+    db = get_driver().config.db
+    c = await db.cursor()
+    if username == "":
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await best_50_pic.send(f"▿ To {nickname} | Best 50 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
             else:
-                is_admin = -1
-    await c.execute(f'select * from plp_blacklist_table where id={user}')
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': username}
+    payload['b50'] = True
+    try:
+        img, success = await generate(payload)
+    except Exception as e:
+        await best_50_pic.send(f"▿ To {nickname} | Best 50 - 生成失败\n[Exception Occurred]\n{e}\n请检查查分器是否已正确导入所有乐曲成绩。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    if success == 400:
+        await best_50_pic.send(f"▿ To {nickname} | Best 50 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+    elif success == 403:
+        await best_50_pic.send(f'▿ To {nickname} | Best 50 - 被禁止\n{username} 不允许使用此方式查询 Best 50。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后直接输入“b50”。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+    else:
+        if username == "":
+            text = f'▾ To {nickname} | Best 50\n您的 Best 50 如图所示。\nBest 50 是 DX Splash Plus 及以后版本的定数方法，与当前版本的定数方法不相同。若您需要当前版本定数，请使用 Best 40。\n若您需要修改查分器数据，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/'
+        else:
+            text = f'▾ To {nickname} | Best 50 - 其他 ID 查询\n您查询的 ID: {username} 已找到。此 ID 的 Best 50 如图所示。\nBest 50 是 DX Splash Plus 及以后版本的定数方法，与当前版本的定数方法不相同。若您需要当前版本定数，请使用 Best 40。'
+        await best_50_pic.send(Message([
+            MessageSegment.reply(event.message_id),
+            MessageSegment.text(text),
+            MessageSegment.image(f"base64://{str(image_to_base64(img), encoding='utf-8')}")
+        ]))
+
+disable_guess_music = on_command('猜歌设置', priority=0)
+
+
+@disable_guess_music.handle()
+async def _(bot: Bot, event: Event):
+    if event.message_type != "group":
+        await disable_guess_music.finish("▿ 猜歌 - 设置 - 注意\n您无法在私聊或频道内设置猜歌。")
+        return
+    arg = str(event.get_message())
+    group_members = await bot.get_group_member_list(group_id=event.group_id)
+    for m in group_members:
+        if m['user_id'] == event.user_id:
+            break
+    su = Config.superuser
+    if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in su:
+        await disable_guess_music.finish("▿ 猜歌 - 设置 - 无权限\n抱歉，只有群管理员/小犽管理者才有权调整猜歌设置。")
+        return
+    db = get_driver().config.db
+    c = await db.cursor()
+    if arg == '启用':
+        try:
+            await c.execute(f'update guess_table set enabled=1 where group_id={event.group_id}')
+        except Exception:
+            await disable_guess_music.finish(f"▿ 猜歌 - 设置\n您需要运行一次猜歌才可进行设置！")
+    elif arg == '禁用':
+        try:
+            await c.execute(f'update guess_table set enabled=0 where group_id={event.group_id}')
+        except Exception:
+            await disable_guess_music.finish(f"▿ 猜歌 - 设置\n您需要运行一次猜歌才可进行设置！")
+    else:
+        await disable_guess_music.finish("▾ 猜歌 - 设置\n请输入 猜歌设置 启用/禁用")
+        return
+    await db.commit()
+    await disable_guess_music.finish(f"▾ 猜歌 - 设置\n设置成功并已即时生效。\n当前群设置为: {arg}")
+    
+            
+guess_dict: Dict[Tuple[str, str], GuessObject] = {}
+guess_cd_dict: Dict[Tuple[str, str], float] = {}
+guess_music = on_command('猜歌', priority=0)
+
+
+
+async def guess_music_loop(bot: Bot, event: Event, state: T_State):
+    await asyncio.sleep(10)
+    guess: GuessObject = state["guess_object"]
+    if guess.is_end:
+        return
+    cycle = state["cycle"]
+    if cycle < 6:
+        asyncio.create_task(bot.send(event, f"▾ 猜歌提示 | 第 {cycle + 1} 个 / 共 7 个\n这首歌" + guess.guess_options[cycle]))
+    else:
+        asyncio.create_task(bot.send(event, Message([
+            MessageSegment.text("▾ 猜歌提示 | 第 7 个 / 共 7 个\n这首歌封面的一部分是："),
+            MessageSegment.image("base64://" + str(guess.b64image, encoding="utf-8")),
+            MessageSegment.text("快和群里的小伙伴猜一下吧！\n提示: 30 秒内可以回答这首歌的ID、歌曲标题或歌曲标题的大于5个字的连续片段，超时我将揭晓答案。")
+        ])))
+        asyncio.create_task(give_answer(bot, event, state))
+        return
+    state["cycle"] += 1
+    asyncio.create_task(guess_music_loop(bot, event, state))
+
+
+async def give_answer(bot: Bot, event: Event, state: T_State):
+    await asyncio.sleep(30)
+    guess: GuessObject = state["guess_object"]
+    if guess.is_end:
+        return
+    asyncio.create_task(bot.send(event, Message([MessageSegment.text("▿ 答案\n都没有猜到吗......那现在揭晓答案！\n♪ " + f"{guess.music['id']} > {guess.music['title']}\n"), MessageSegment.image(f"https://www.diving-fish.com/covers/{guess.music['id']}.jpg")])))
+    del guess_dict[state["k"]]
+
+
+@guess_music.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    mt = event.message_type
+    if mt == "guild":
+        k = (mt, event.guild_id)
+    else:
+        k = (mt, event.user_id if mt == "private" else event.group_id)
+    if mt == "group":
+        gid = event.group_id
+        db = get_driver().config.db
+        c = await db.cursor()
+        await c.execute(f"select * from guess_table where group_id={gid}")
+        data = await c.fetchone()
+        if data is None:
+            await c.execute(f'insert into guess_table values ({gid}, 1)')
+        elif data[1] == 0:
+            await guess_music.send("▿ 猜歌 - 被禁用\n抱歉，本群的管理员设置已设置已禁用猜歌。")
+            return
+        if k in guess_dict:
+            if k in guess_cd_dict and time.time() > guess_cd_dict[k] - 400:
+                # 如果已经过了 200 秒则自动结束上一次
+                del guess_dict[k]
+            else:
+                await guess_music.send("▿ 猜歌 - 正在进行中\n当前已有正在进行的猜歌，要不要来参与一下呀？")
+                return
+    if len(guess_dict) >= 5:
+        await guess_music.finish("▿ 猜歌 - 同时进行的群过多\n小犽有点忙不过来了...现在正在猜的群太多啦，晚点再试试如何？")
+        return
+    if k in guess_cd_dict and time.time() < guess_cd_dict[k]:
+        await guess_music.finish(f"▿ 猜歌 - 冷却中\n已经猜过一次啦！下次猜歌会在 {time.strftime('%H:%M', time.localtime(guess_cd_dict[k]))} 可用噢")
+        return
+    guess = GuessObject()
+    guess_dict[k] = guess
+    state["k"] = k
+    state["guess_object"] = guess
+    state["cycle"] = 0
+    guess_cd_dict[k] = time.time() + 600
+    await guess_music.send("▾ 猜歌\n我将从热门乐曲中选择一首歌，并描述它的一些特征。大家可以猜一下！\n知道答案的话，可以告诉我谱面ID、歌曲标题或者标题中连续5个以上的片段来向我阐述答案！\n猜歌时查歌等其他命令依然可用，这个命令可能会很刷屏，管理员可以根据情况通过【猜歌设置】命令设置猜歌是否启用。")
+    asyncio.create_task(guess_music_loop(bot, event, state))
+
+guess_music_solve = on_message(priority=20)
+
+@guess_music_solve.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    mt = event.message_type
+    if mt == "guild":
+        k = (mt, event.guild_id)
+    else:
+        k = (mt, event.user_id if mt == "private" else event.group_id)
+    if k not in guess_dict:
+        return
+    ans = str(event.get_message())
+    guess = guess_dict[k]
+    # await guess_music_solve.send(ans + "|" + guess.music['id'])
+    if ans == guess.music['id'] or (ans.lower() == guess.music['title'].lower()) or (len(ans) >= 5 and ans.lower() in guess.music['title'].lower()):
+        guess.is_end = True
+        del guess_dict[k]
+        await guess_music_solve.finish(Message([
+            MessageSegment.reply(event.message_id),
+            MessageSegment.text("▾ 答案\n您猜对了！答案就是：\n" + f"♪ {guess.music['id']} > {guess.music['title']}\n"),
+            MessageSegment.image(f"https://www.diving-fish.com/covers/{guess.music['id']}.jpg")
+        ]))
+
+waiting_set = on_command("设置店铺")
+@waiting_set.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    argv = str(event.get_message()).strip().split(" ")
+    db = get_driver().config.db
+    now = datetime.datetime.now()
+    c = await db.cursor()
+    if event.message_type != "group":
+        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，群管理员/小犽管理者才有权调整店铺设置，请在群内再试一次。")
+        return
+    arg = str(event.get_message())
+    group_members = await bot.get_group_member_list(group_id=event.group_id)
+    for m in group_members:
+        if m['user_id'] == event.user_id:
+            break
+    su = Config.superuser
+    if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in su:
+        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，只有群管理员/小犽管理者才有权调整店铺设置。")
+        return
+    if len(argv) > 2 or argv[0] == "帮助":
+        await waiting_set.finish("▾ 出勤大数据 - 帮助\n命令格式是:\n设置店铺 [店铺名] [店铺位置]\n注意只有管理员才可以有权设置店铺信息哦。")
+        return
+    time = f"{now.year}/{now.month}/{now.day} {now.hour}:{now.strftime('%M')}:{now.strftime('%S')}"
+    await c.execute(f'select * from waiting_table where shop="{argv[0]}"')
     data = await c.fetchone()
     if data is None:
-        is_black = 0
-        baninsert = 0
-        banreply = 0
-        bantake = 0
+        if len(argv) == 2:
+            await c.execute(f'insert into waiting_table values ("{argv[0]}","{argv[1]}",0,"{time}")')
+            await db.commit()
+        elif len(argv) == 1:
+            await c.execute(f'insert into waiting_table values ("{argv[0]}","待设置",0,"{time}")')
+            await db.commit()
+        await waiting_set.finish(f"▾ 出勤大数据\n已成功设置店铺。\n店铺名: {argv[0]}\n出勤人数: 0\n修改时间: {time}")
     else:
-        if data[2] == 0:
-            baninsert = 0
-        if data[3] == 0:
-            bantake = 0
-        if data[4] == 0:
-            banreply = 0
-    if is_admin == -1:
-        if is_black == 1:
-            if baninsert == 0 and bantake == 0 and banreply == 0:
-                msg += "👤 普通成员(非群聊无法确定是否为管理员)"
-            elif baninsert == 1 and bantake == 1 and banreply == 1:
-                msg += "👤 禁止使用"
-            else:
-                msg += "👤 限制功能"
-        else:
-            msg += "👤 普通成员(非群聊无法确定是否为管理员)"
-    elif is_admin == 0:
-        if is_black == 1:
-            if baninsert == 0 and bantake == 0 and banreply == 0:
-                msg += "👤 普通成员"
-            elif baninsert == 1 and bantake == 1 and banreply == 1:
-                msg += "👤 禁止使用"
-            else:
-                msg += "👤 限制功能"
-        else:
-            msg += "👤 普通成员"
-    elif is_admin == 1:
-        if is_black == 1:
-            if baninsert == 0 and bantake == 0 and banreply == 0:
-                msg += "👤 群管理员"
-            else:
-                msg += "👤 被限制功能的群管理员(可自行解除限制)"
-        else:
-            msg += "👤 群管理员"
-    elif is_admin == 2:
-        if is_black == 1:
-            if baninsert == 0 and bantake == 0 and banreply == 0:
-                msg += "👤 超级管理员"
-            else:
-                msg += "👤 被限制功能的超级管理员(可自行解除限制)"
-        else:
-            msg += "👤 超级管理员"
-    await c.execute(f'select * from plp_table where user_id={user}')
-    data2 = await c.fetchall()
-    msg += f" | 🍾 {len(data2)}\n----------------------\n当前状态可使用以下社区功能:\n"
-    if baninsert == 0:
-        msg += "[√] 扔瓶子\n"
-    else:
-        msg += "[×] 扔瓶子\n"
-    if bantake == 0:
-        msg += "[√] 捞瓶子\n"
-    else:
-        msg += "[×] 捞瓶子\n"
-    if banreply == 0:
-        msg += "[√] 回复功能\n"
-    else:
-        msg += "[×] 回复功能\n"
-    if len(data2) != 0:
-        msg += "----------------------\n您扔过的漂流瓶的 ID 如下:"
-        for i in range(len(data2)):
-            if i == 0:
-                msg += f"\n{data2[i][0]}"
-            else:
-                msg += f" {data2[i][0]}"
-    await my_plp.finish(msg)
+        if len(argv) == 1:
+            await waiting_set.finish("▿ 出勤大数据 - 设置\n已存在此店铺，您可以选择修改店铺位置信息。")
+            return
+        elif len(argv) == 2:
+            await c.execute(f'update waiting_table set location={argv[1]} where shop={argv[0]}')
+            await waiting_set.finish(f"▾ 出勤大数据\n已成功设置店铺。\n店铺名: {argv[0]}\n出勤人数: 0\n修改时间: {time}")
+            await db.commit()
 
-rolling = on_command("轮盘")
-@rolling.handle()
+waiting = on_regex(r'(.+) ([0-9]?几?\+?\-?1?)人?', rule=to_me(), priority=18)
+@waiting.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "(.+) ([0-9]?几?\+?\-?1?)人?"
+    res = re.match(regex, str(event.get_message()).lower())
+    db = get_driver().config.db
+    now = datetime.datetime.now()
+    c = await db.cursor()
+    time = f"{now.year}/{now.month}/{now.day} {now.hour}:{now.strftime('%M')}:{now.strftime('%S')}"
+    if res.groups()[1] == "几":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+        data = await c.fetchone()
+        if data is None:
+            await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
+            return
+        else:
+            await waiting.finish(f"▾ 出勤大数据\n{data[0]} 有 {data[2]} 人出勤。最后更新时间:{data[3]}")
+            return
+    elif res.groups()[1] == "+1":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+        data = await c.fetchone()
+        if data is None:
+            await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
+            return
+        else:
+            await c.execute(f'update waiting_table set wait={data[2] + 1}, updated="{time}" where shop="{res.groups()[0]}"')
+            await db.commit()
+            await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{data[0]} 有 {data[2] + 1} 人出勤。最后更新时间:{time}")
+            return
+    elif res.groups()[1] == "-1":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+        data = await c.fetchone()
+        if data is None:
+            await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
+            return
+        else:
+            if data[2] - 1 < 0:
+                await waiting.finish("▿ 出勤大数据\n不能再减了，再减就变成灵异事件了！")
+                return
+            await c.execute(f'update waiting_table set wait={data[2] - 1}, updated="{time}" where shop="{res.groups()[0]}"')
+            await db.commit()
+            await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{data[0]} 有 {data[2] - 1} 人出勤。最后更新时间:{time}")
+            return
+    else:
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+        data = await c.fetchone()
+        if data is None:
+            await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
+            return
+        else:
+            await c.execute(f'update waiting_table set wait={res.groups()[1]}, updated="{time}" where shop="{res.groups()[0]}"')
+            await db.commit()
+            await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{res.groups()[0]} 有 {res.groups()[1]} 人出勤。最后更新时间:{time}")
+            return
+
+location = on_regex(r'.+位置', rule=to_me())
+@location.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "(.+)位置"
+    name = re.match(regex, str(event.get_message())).groups()[0].strip().lower()
+    db = get_driver().config.db
+    c = await db.cursor()
+    await c.execute(f'select * from waiting_table where shop="{name}"')
+    data = await c.fetchone()
+    if data is None:
+        await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
+        return
+    else:
+        await waiting.finish(f"▾ 出勤大数据 - 位置\n{data[0]}: {data[1]}")
+        return
+
+rand_ranking = on_command("段位模式")
+
+@rand_ranking.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     nickname = event.sender.nickname
     argv = str(event.get_message()).strip().split(" ")
-    roll = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ'.split(' ')
-    rollnum = 0
-    sum = 0
-    total = 0
-    las = []
-    rani = 0
-    msg = f'▾ To {nickname} | 轮盘'
-    if len(argv) % 2 != 0:
-        await rolling.finish(f"▿ To {nickname} | 轮盘\n请注意格式：\n轮盘 <选项A> <A占比> <选项B> <B占比>......\n注意：所有选项占比的和必须等于 100。要求占比必须是整数，要不然...骂你嗷。")
-        return
     try:
-        for i in range(len(argv)):
-            if i % 2 == 0:
-                continue
-            rollnum += 1
-            sum += int(argv[i])
-    except Exception as e:
-        await rolling.finish(f"▿ To {nickname} | 轮盘\n....您输入的概率确定是整数还是**粗口**的其他语言？\n[Exception Occurred]\n{e}")
-        return
-    if sum != 100:
-        await rolling.finish(f"▿ To {nickname} | 轮盘\n注意：所有选项占比的和必须等于 100。")
-        return
-    else:
-        if rollnum > 52:
-            await rolling.finish(f"▿ To {nickname} | 轮盘\n注意：您超出了52个选项，不支持过多选项。")
-            return
+        if argv[0] == "帮助":
+            rand_result = "▾ 段位模式 - 帮助\n命令是:\n段位模式 <Expert/Master> <初级/中级/上级/超上级*1> <计算> (<Great数量> <Good数量> <Miss数量> <剩余的血量*3>)*2\n* 注意:\n*1 超上级选项只对Master有效。\n*2 只有使用计算功能的时候才需要打出括号内要求的内容。注意如果您对应的 Great 或 Good 或 Miss 的数量是0，请打0。\n *3 您可以指定剩余的血量(Life)，如果您不指定血量，默认按满血计算。"
         else:
-            rollnum = 0
-        for i in range(len(argv)):
-            if i % 2 != 0:
-                continue
-            msg += f'\n{roll[rollnum]}: {argv[i]}, 占比: {argv[i + 1]}% ({total + 1} -'
-            for j in range(int(argv[i + 1])):
-                total += 1
-            las.append(total)
-            msg += f' {total})'
-            rollnum += 1
-        ran = random.randint(1,100)
-        for i in range(len(argv)):
-            if i % 2 != 0:
-                continue
-            if i == 0:
-                if ran <= las[rani]:
-                    ran_select = i
-            else:
-                if rani + 1 == len(las) and ran > int(las[rani - 1]):
-                    ran_select = i
+            rand_result = f'▾ To {nickname} | Rank Mode\nRank: {argv[0]} {argv[1]}\n'
+            if argv[0] == "Expert" or argv[0] == "expert" or argv[0] == "EXPERT":
+                if argv[1] == "初级":
+                    level = ['7', '8', '9']
+                    life = 700
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 50
+                    min = 7
+                    max = 9
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若红、紫谱面难度相同，优先采用红谱。"
+                elif argv[1] == "中级":
+                    level = ['8', '9', '10']
+                    life = 600
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 50
+                    min = 8
+                    max = 10
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若红、紫谱面难度相同，优先采用红谱。"
+                elif argv[1] == "上级":
+                    level = ['10+', '11', '11+', '12', '12+']
+                    life = 500
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 50
+                    min = '10+'
+                    max = '12+'
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若红、紫谱面难度相同，优先采用红谱。"
                 else:
-                    if ran > int(las[rani - 1]) and ran <= int(las[rani + 1]):
-                        ran_select = i
-            rani += 1
-    msg += f'\n随机数是 {ran}，所以随机到的选项是: {argv[ran_select]}。'
-    await rolling.finish(msg)
-
-guild_bind = on_command("绑定")
-
-@guild_bind.handle()
-async def _(bot: Bot, event: GuildMessageEvent, state: T_State):
-    qq = str(event.get_message()).strip()
-    nickname = event.sender.nickname
-    uid = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    if qq == "":
-        await guild_bind.finish(f"▿ To {nickname} | 绑定 - 错误\n您没有输入您的 QQ 号码。")
-        return
-    await c.execute(f'select * from gld_table where uid="{uid}"')
-    data = await c.fetchone()
-    if data is None:
-        await c.execute(f'insert into gld_table values ({qq}, {uid})')
-        await db.commit()
-        await guild_bind.finish(f"▾ To {nickname} | 绑定\n您已成功绑定为您所输入的 QQ 号，现在您可以正常免输入用户名来使用 B40 / B50 / 底分分析 / 将牌查询 等内容，并可以在频道内使用漂流社区了。\n请注意！根据频道管理守则，您 **务必撤回** 您的绑定消息，以免造成不必要的损失。")
-        return
-    else:
-        await c.execute(f'update gld_table set qq={qq} where uid={uid}')
-        await db.commit()
-        await guild_bind.finish(f"▾ To {nickname} | 绑定\n您已成功换绑为您所输入的 QQ 号。\n请注意！根据频道管理守则，您 **务必撤回** 您的绑定消息，以免造成不必要的损失。")
-
-guild_unbind = on_command("解绑")
-
-@guild_unbind.handle()
-async def _(bot: Bot, event: GuildMessageEvent, state: T_State):
-    nickname = event.sender.nickname
-    uid = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    await c.execute(f'select * from gld_table where uid="{uid}"')
-    data = await c.fetchone()
-    if data is None:
-        await guild_bind.finish(f"▿ To {nickname} | 解绑\n您还没有绑定。")
-        return
-    else:
-        await c.execute(f'delete from gld_table where uid="{uid}"')
-        await db.commit()
-        await guild_bind.finish(f"▾ To {nickname} | 解绑\n您已成功解绑。")
-
-guild_view = on_command("查询绑定")
-@guild_view.handle()
-async def _(bot: Bot, event: GuildMessageEvent, state: T_State):
-    qq = str(event.get_message()).strip()
-    nickname = event.sender.nickname
-    uid = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    await c.execute(f'select * from gld_table where uid="{uid}"')
-    data = await c.fetchone()
-    if data is None:
-        await guild_bind.finish(f"▿ To {nickname} | 绑定查询\n您还没有绑定。")
-        return
-    else:
-        await guild_bind.finish(f"▾ To {nickname} | 绑定查询\nQQ ID:{data[0]}\n频道 ID:{data[1]}")
-
-acard = on_command("抽卡模拟", aliases={"模拟抽卡"})
-@acard.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    mt = event.message_type
-    user = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await acard.send(f"▿ To {nickname} | 抽卡模拟器 - 错误\n在频道内，您需要绑定 QQ 号才可使用抽卡模拟器。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    await c.execute(f'select * from acard_table where id="{user}"')
-    data1 = await c.fetchone()
-    if data1 is None:
-        await c.execute(f'insert into acard_table values ({user},1,0,0,0,0,0,0)')
-    s = f'▾ To {nickname} | 抽卡模拟器\n'
-    cardnum = random.randint(1,100)
-    if cardnum <= 2:
-        if data1 is None:
-            await c.execute(f'update acard_table set six=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set six={data1[2] + 1}, times={data1[1] + 1} where id={user}')
-        s += "欧皇诞生！恭喜您抽中★6卡！\n"
-    elif cardnum > 2 and cardnum <= 10:
-        if data1 is None:
-            await c.execute(f'update acard_table set five=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set five={data1[3] + 1}, times={data1[1] + 1} where id={user}')
-        s += "金色闪耀！恭喜您抽中★5卡！\n"
-    elif cardnum > 10 and cardnum <= 50:
-        if data1 is None:
-            await c.execute(f'update acard_table set four=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set four={data1[4] + 1}, times={data1[1] + 1} where id={user}')
-        s += "您抽中了★4卡。\n"
-    elif cardnum > 50 and cardnum <= 70:
-        if data1 is None:
-            await c.execute(f'update acard_table set three=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set three={data1[5] + 1}, times={data1[1] + 1} where id={user}')
-        s += "您抽中了★3卡。\n"
-    elif cardnum > 70 and cardnum <= 90:
-        if data1 is None:
-            await c.execute(f'update acard_table set two=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set two={data1[6] + 1}, times={data1[1] + 1} where id={user}')
-        s += "有点非......您抽中了★2卡。\n"
-    else:
-        if data1 is None:
-            await c.execute(f'update acard_table set one=1 where id={user}')
-        else:
-            await c.execute(f'update acard_table set one={data1[7] + 1}, times={data1[1] + 1} where id={user}')
-        s += "天哪......您抽中了★1卡......\n"
-    s += "抽卡说明 >\n1.爆率:\n★6: 2% ★5: 8% ★4: 40%\n★3: 20% ★2: 20% ★1: 10%\n"
-    s += "2.卡的星数等级越高越稀有。\n3.此模拟器不设累计次数增加高星爆率的行为。"
-    await db.commit()
-    await acard.send(s)
-
-
-acard10x = on_command("十连模拟", aliases={"模拟十连"})
-@acard10x.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    mt = event.message_type
-    user = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await acard.send(f"▿ To {nickname} | 抽卡模拟器 - 错误\n在频道内，您需要绑定 QQ 号才可使用抽卡模拟器。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    await c.execute(f'select * from acard_table where id="{user}"')
-    data1 = await c.fetchone()
-    if data1 is None:
-        await c.execute(f'insert into acard_table values ({user},0,0,0,0,0,0,0)')
-        times = 0
-        six = 0
-        five = 0
-        four = 0
-        three = 0
-        two = 0
-        one = 0
-    else:
-        times = data1[1]
-        six = data1[2]
-        five = data1[3]
-        four = data1[4]
-        three = data1[5]
-        two = data1[6]
-        one = data1[7]
-    s = f'▾ To {nickname} | 抽卡模拟器 - 十连模式\n'
-    for i in range(0,10):
-        s += f'第 {i + 1} 次: '
-        times += 1
-        cardnum = random.randint(1,100)
-        if cardnum <= 2:
-            six += 1
-            await c.execute(f'update acard_table set six={six}, times={times} where id={user}')
-            s += "欧皇诞生！恭喜您抽中★6卡！\n"
-        elif cardnum > 2 and cardnum <= 10:
-            five += 1
-            await c.execute(f'update acard_table set five={five}, times={times} where id={user}')
-            s += "金色闪耀！恭喜您抽中★5卡！\n"
-        elif cardnum > 10 and cardnum <= 50:
-            four += 1
-            await c.execute(f'update acard_table set four={four}, times={times} where id={user}')
-            s += "您抽中了★4卡。\n"
-        elif cardnum > 50 and cardnum <= 70:
-            three += 1
-            await c.execute(f'update acard_table set three={three}, times={times} where id={user}')
-            s += "您抽中了★3卡。\n"
-        elif cardnum > 70 and cardnum <= 90:
-            two += 1
-            await c.execute(f'update acard_table set two={two}, times={times} where id={user}')
-            s += "有点非......您抽中了★2卡。\n"
-        else:
-            one += 1
-            await c.execute(f'update acard_table set one={one}, times={times} where id={user}')
-            s += "天哪......您抽中了★1卡......\n"
-    s += "抽卡说明 >\n1.爆率:\n★6: 2% ★5: 8% ★4: 40%\n★3: 20% ★2: 20% ★1: 10%\n"
-    s += "2.卡的星数等级越高越稀有。\n3.此模拟器不设累计次数增加高星爆率的行为。"
-    await db.commit()
-    await acard10x.send(s)
-
-acardcenter = on_command("我的抽卡情况", aliases={"抽卡情况"})
-@acardcenter.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    nickname = event.sender.nickname
-    mt = event.message_type
-    user = event.user_id
-    db = get_driver().config.db
-    c = await db.cursor()
-    if mt == "guild":
-        await c.execute(f'select * from gld_table where uid="{event.user_id}"')
-        data = await c.fetchone()
-        if data is None:
-            await acardcenter.send(f"▿ To {nickname} | 抽卡中心 - 错误\n在频道内，您需要绑定 QQ 号才可查看模拟抽卡器的抽卡情况。请进行绑定后再试一次。")
-            return
-        else:
-            user = data[0]
-    await c.execute(f'select * from acard_table where id="{user}"')
-    data1 = await c.fetchone()
-    if data1 is None:
-        await acardcenter.send(f"▿ To {nickname} | 抽卡中心\n您还没有使用过模拟抽卡/模拟十连命令，快来试试吧！")
-        return
-    s = f'▾ To {nickname} | 抽卡中心\n'
-    s += f'抽卡次数：{data1[1]} 次。\n'
-    s += f'★6: {data1[2]} 张  ★5: {data1[3]} 张\n★4: {data1[4]} 张  ★3: {data1[5]} 张\n★2: {data1[6]} 张  ★1: {data1[7]} 张'
-    await acardcenter.send(s)
-    
-high_eq = on_regex(r'低情商.+高情商.+')
-
-@high_eq.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    regex = '低情商(.+)高情商(.+)'
-    nickname = event.sender.nickname
-    groups = re.match(regex, str(event.get_message())).groups()
-    left = groups[0].strip()
-    right = groups[1].strip()
-    if len(left) > 15 or len(right) > 15:
-        await high_eq.send("▿ LMM Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
-        return
-    img_p = Image.open(path)
-    draw_text(img_p, left, 0)
-    draw_text(img_p, right, 400)
-    await high_eq.send(Message([{
-        "type": "text",
-        "data": {
-            "text": f"▾ T‍o {nickname} | LMM Image Creator - 低高情商\n"
-        }
-    },{
-        "type": "image",
-        "data": {
-            "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
-        }
-    }]))
-
-
-jlpx = on_command('金龙盘旋')
-
-
-@jlpx.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    argv = str(event.get_message()).strip().split(' ')
-    nickname = event.sender.nickname
-    if len(argv) != 3:
-        await jlpx.send("▿ LMM Image Creator - 参数不足\n金龙盘旋需要三个参数！")
-        return
-    url = await get_jlpx(argv[0], argv[1], argv[2])
-    await jlpx.send(Message([{
-        "type": "text",
-        "data": {
-            "text": f"▾ T‍o {nickname} | LMM Image Creator - 金龙盘旋\n"
-        }
-    },{
-        "type": "image",
-        "data": {
-            "file": f"{url}"
-        }
-    }]))
-
-
-gocho = on_command('gocho')
-
-
-@gocho.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    argv = str(event.get_message()).strip().split(' ')
-    if len(argv) != 2:
-        await jlpx.send("▿ LMM Image Creator - 参数不足\nGocho 需要两个参数！")
-        return
-    i = generate(argv[0], argv[1])
-    await gocho.send(Message([{
-        "type": "text",
-        "data": {
-            "text": f"▾ T‍o {nickname} | LMM Image Creator - Gocho\n"
-        }
-    },{
-        "type": "image",
-        "data": {
-            "file": f"base64://{str(image_to_base64(i), encoding='utf-8')}"
-        }
-    }]))
-
-
-img_template = on_command("img_template", aliases={"imgt"})
-
-
-@img_template.handle()
-async def _(bot: Bot, event: Event):
-    arg = event.get_message()
-    try:
-        base, img = await img_template_parser(arg)
-        b64 = await edit_base_img(base, img)
-        await img_template.send(Message([{
-            "type": "image",
-            "data": {
-                "file": f"base64://{str(b64, encoding='utf-8')}"
-            }
-        }]))
+                    rand_ranking.send(f"▿ To {nickname} | Rank Error\n寄，Expert 等级只有初级、中级、上级！")
+                    return
+            elif argv[0] == "Master" or argv[0] == "master" or argv[0] == "MASTER":
+                if argv[1] == "初级":
+                    level = ['10', '10+', '11', '11+', '12']
+                    life = 700
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 50
+                    min = 10
+                    max = 12
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若紫、白谱面难度相同，优先采用紫谱。"
+                elif argv[1] == "中级":
+                    level = ['12', '12+', '13']
+                    life = 500
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 50
+                    min = 12
+                    max = 13
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若紫、白谱面难度相同，优先采用紫谱。"
+                elif argv[1] == "上级":
+                    level = ['13', '13+', '14.0', '14.1', '14.2', '14.3']
+                    life = 300
+                    gr = -2
+                    gd = -2
+                    miss = -5
+                    clear = 20
+                    min = 13
+                    max = 14.3
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若紫、白谱面难度相同，优先采用紫谱。"
+                elif argv[1] == "超上级":
+                    level = ['14.4', '14.5', '14.6', '14+', '15']
+                    life = 100
+                    gr = -2
+                    gd = -3
+                    miss = -5
+                    clear = 10
+                    min = 14.4
+                    max = 15.0
+                    msg = "\n注意: 在难度选择时，请优先采用适合本段位的等级最高的难度，若紫、白谱面难度相同，优先采用紫谱。"
+                else:
+                    rand_ranking.send(f"▿ To {nickname} | Rank Error\n寄，Master 等级只有初级、中级、上级、超上级！")
+                    return
+            else:
+                rand_ranking.send(f"▿ To {nickname} | Rank Error\n寄，大等级只有Master、Expert！")
+                return
+            if len(argv) > 3 and argv[2] == "计算":
+                if len(argv) > 7:
+                    raise ValueError
+                else:
+                    if len(argv) == 6:
+                        mylife = life + (int(argv[3]) * gr) + (int(argv[4]) * gd) + (int(argv[5]) * miss)
+                        if mylife <= 0:
+                            await rand_ranking.send(f"▿ To {nickname} | 段位闯关失败\n寄，您的血量扣光了......{argv[0]} {argv[1]}段位不合格！")
+                            return
+                        else:
+                            mylife += clear
+                            if mylife > life:
+                                mylife = life
+                            await rand_ranking.send(f"▾ To {nickname} | 段位血量\n您还剩余 {mylife} 血！如果没闯到第四首就请继续加油吧！")
+                            return
+                    elif len(argv) == 7:
+                        mylife = int(argv[6]) + (int(argv[3]) * gr) + (int(argv[4]) * gd) + (int(argv[5]) * miss)
+                        if mylife <= 0:
+                            await rand_ranking.send(f"▿ To {nickname} | 段位闯关失败\n寄，您的血量扣光了......{argv[0]} {argv[1]}段位不合格！")
+                            return
+                        else:
+                            mylife += clear
+                            if mylife > life:
+                                mylife = life
+                            await rand_ranking.send(f"▾ To {nickname} | 段位血量\n您还剩余 {mylife} 血！如果没闯到第四首就请继续加油吧！")
+                            return
+                    else:
+                        raise ValueError
+            else:
+                rand_result += f"\n段位难度区间: {min} - {max}\n段位血量规则:\nLife: {life} -> Clear: +{clear}\nGreat: {gr} Good: {gd} Miss: {miss}\n"
+                rand_result += msg
+                for i in range(4):
+                    music_data = total_list.filter(level=level, type=["SD", "DX"])
+                    rand_result += f'\n----- Track {i + 1} / 4 -----\n' + song_txt(music_data.random())
+        await rand_ranking.send(rand_result)
     except Exception as e:
-        await img_template.send(f"▿ LMM Image Templator - Exception\n[Exception Occurred]\n{str(e)}")
+        await rand_ranking.finish(f"▿ To {nickname} | Rank Mode Error\n语法有错。如果您需要帮助请对我说‘段位模式 帮助’。\n[Exception Occurred]\n{e}")
+
+plate = on_regex(r'^([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽舞霸])([極极将舞神者]舞?)进度\s?(.+)?')
+
+@plate.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "([真超檄橙暁晓桃櫻樱紫菫堇白雪輝辉熊華华爽舞霸])([極极将舞神者]舞?)进度\s?(.+)?"
+    res = re.match(regex, str(event.get_message()).lower())
+    diffs = 'Basic Advanced Expert Master Re:Master'.split(' ')
+    nickname = event.sender.nickname
+    mt = event.message_type
+    db = get_driver().config.db
+    c = await db.cursor()
+    if f'{res.groups()[0]}{res.groups()[1]}' == '真将':
+        await plate.finish(f"▿ To {nickname} | Plate Error\n请您注意: 真系 (maimai & maimaiPLUS) 没有真将成就。")
+        return
+    if not res.groups()[2]:
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await plate.send(f"▿ To {nickname} | Plate - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': res.groups()[2].strip()}
+    if res.groups()[0] in ['舞', '霸']:
+        payload['version'] = list(set(version for version in plate_to_version.values()))
+    if res.groups()[0] in ['真']:
+        payload['version'] = [plate_to_version['真1'], plate_to_version['真2']]
+    else:
+        payload['version'] = [plate_to_version[res.groups()[0]]]
+    player_data, success = await get_player_plate(payload)
+    if success == 400:
+        await plate.send(f"▿ To {nickname} | Plate - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+    elif success == 403:
+        await plate.send(f'▿ To {nickname} | Plate - 被禁止\n{username} 不允许使用此方式查询牌子进度。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+    else:
+        song_played = []
+        song_remain_expert = []
+        song_remain_master = []
+        song_remain_re_master = []
+        song_remain_difficult = []
+        if res.groups()[1] in ['将', '者']:
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] in ['舞', '霸'] and song['level_index'] == 4 and song['achievements'] < (100.0 if res.groups()[1] == '将' else 80.0):
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] in ['極', '极']:
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and not song['fc']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and not song['fc']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and not song['fc']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] == '舞舞':
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and song['fs'] not in ['fsd', 'fsdp']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1] == "神":
+            for song in player_data['verlist']:
+                if song['level_index'] == 2 and song['fc'] not in ['ap', 'app']:
+                    song_remain_expert.append([song['id'], song['level_index']])
+                if song['level_index'] == 3 and song['fc'] not in ['ap', 'app']:
+                    song_remain_master.append([song['id'], song['level_index']])
+                if res.groups()[0] == '舞' and song['level_index'] == 4 and song['fc'] not in ['ap', 'app']:
+                    song_remain_re_master.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        total_music_num = 0
+        for music in total_list:
+            if music.version in payload['version']:
+                total_music_num += 1
+                if [int(music.id), 2] not in song_played:
+                    song_remain_expert.append([int(music.id), 2])
+                if [int(music.id), 3] not in song_played:
+                    song_remain_master.append([int(music.id), 3])
+                if res.groups()[0] in ['舞', '霸'] and len(music.level) == 5 and [int(music.id), 4] not in song_played:
+                    song_remain_re_master.append([int(music.id), 4])
+        song_remain_expert = sorted(song_remain_expert, key=lambda i: int(i[0]))
+        song_remain_master = sorted(song_remain_master, key=lambda i: int(i[0]))
+        song_remain_re_master = sorted(song_remain_re_master, key=lambda i: int(i[0]))
+        for song in song_remain_expert + song_remain_master + song_remain_re_master:
+            music = total_list.by_id(str(song[0]))
+            if music.ds[song[1]] > 13.6:
+                song_remain_difficult.append([music.id, music.title, diffs[song[1]], music.ds[song[1]], music.stats[song[1]].difficulty, song[1]])
+        expcomplete = 100 - (len(song_remain_expert) / total_music_num * 100)
+        mascomplete = 100 - (len(song_remain_master) / total_music_num * 100)
+        msg = f'''▾ To {nickname} | {res.groups()[0]}{res.groups()[1]}当前进度\n{"您" if not res.groups()[2] else res.groups()[2]}的剩余歌曲数量如下：
+Expert | 已完成 {expcomplete:.2f}%, 待完成 {len(song_remain_expert)} 首 / 共 {total_music_num} 首
+Master | 已完成 {mascomplete:.2f}%, 待完成 {len(song_remain_master)} 首 / 共 {total_music_num} 首
+'''
+        song_remain = song_remain_expert + song_remain_master + song_remain_re_master
+        song_record = [[s['id'], s['level_index']] for s in player_data['verlist']]
+        if res.groups()[0] in ['舞', '霸']:
+            remascomplete = 100 - (len(song_remain_re_master) / total_music_num * 100)
+            msg += f'Re:Master | 已完成 {remascomplete:.2f}%, 待完成 {len(song_remain_re_master)} 首 / 共 {total_music_num} 首\n'
+        if len(song_remain_difficult) > 0:
+            if len(song_remain_difficult) < 11:
+                if res.groups()[0] in ['真']:
+                        msg += "\n注意: 真系不需要游玩ジングルベル(以下简称\"圣诞歌\")。受技术限制，真系查询仍包括圣诞歌，您可以忽略此歌曲。如您的真系进度只剩下圣诞歌，则您已达成条件。\n"
+                msg += '\n剩余的 13+ 及以上的谱面如下：\n'
+                for s in sorted(song_remain_difficult, key=lambda i: i[3]):
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1] in ['将', '者']:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1] in ['極', '极', '神']:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1] == '舞舞':
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if res.groups()[0] in ['真'] and s[0] == 70:
+                        continue
+                    msg += f'Track {s[0]} > {s[1]} | {s[2]}\n定数: {s[3]} 相对难度: {s[4]} {"当前达成率: " if self_record else ""}{self_record}'.strip() + '\n\n'
+            else: msg += f'还有 {len(song_remain_difficult)} 个等级是 13+ 及以上的谱面，加油推分捏！\n'
+        elif len(song_remain) > 0:
+            if len(song_remain) < 11:
+                msg += '\n剩余曲目：\n'
+                for s in sorted(song_remain, key=lambda i: i[3]):
+                    m = total_list.by_id(str(s[0]))
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1] in ['将', '者']:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1] in ['極', '极', '神']:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1] == '舞舞':
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if res.groups()[0] in ['真'] and s[0] == 70:
+                        continue
+                    msg += f'Track {m.id} > {m.title} | {diffs[s[1]]}\n定数: {m.ds[s[1]]} 相对难度: {m.stats[s[1]].difficulty} {"当前达成率: " if self_record else ""}{self_record}'.strip() + '\n\n'
+            else:
+                msg += '已经没有大于 13+ 的谱面了,加油清谱吧！\n'
+        else: msg += f'{res.groups()[0]}{res.groups()[1]} 所需的所有歌曲均已达到要求，恭喜 {"您" if not res.groups()[2] else res.groups()[2]} 达成了 {res.groups()[0]}{res.groups()[1]}！'
+        await plate.send(msg.strip())
+
+levelprogress = on_regex(r'^([0-9]+\+?)\s?(.+)进度\s?(.+)?')
+
+@levelprogress.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = "([0-9]+\+?)\s?(.+)进度\s?(.+)?"
+    res = re.match(regex, str(event.get_message()).lower())
+    scoreRank = 'd c b bb bbb a aa aaa s s+ ss ss+ sss sss+'.lower().split(' ')
+    levelList = '1 2 3 4 5 6 7 7+ 8 8+ 9 9+ 10 10+ 11 11+ 12 12+ 13 13+ 14 14+ 15'.split(' ')
+    comboRank = 'fc fc+ ap ap+'.split(' ')
+    combo_rank = 'fc fcp ap app'.split(' ')
+    syncRank = 'fs fs+ fdx fdx+'.split(' ')
+    sync_rank = 'fs fsp fdx fdxp'.split(' ')
+    achievementList = [50.0, 60.0, 70.0, 75.0, 80.0, 90.0, 94.0, 97.0, 98.0, 99.0, 99.5, 100.0, 100.5]
+    nickname = event.sender.nickname
+    db = get_driver().config.db
+    c = await db.cursor()
+    mt = event.message_type
+    if res.groups()[0] not in levelList:
+        await levelprogress.finish(f"▿ To {nickname} | 参数错误\n最低是1，最高是15，您这整了个{res.groups()[0]}......故意找茬的吧？")
+        return
+    if res.groups()[1] not in scoreRank + comboRank + syncRank:
+        await levelprogress.finish(f"▿ To {nickname} | 参数错误\n输入有误。\n1.请不要随便带空格。\n2.等级目前只有D/C/B/BB/BBB/A/AA/AAA/S/S+/SS/SS+/SSS/SSS+\n3.同步相关只有FS/FC/FDX/FDX+/FC/FC+/AP/AP+。")
+        return
+    if not res.groups()[2]:
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': res.groups()[2].strip()}
+    payload['version'] = list(set(version for version in plate_to_version.values()))
+    player_data, success = await get_player_plate(payload)
+    if success == 400:
+        await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    elif success == 403:
+        await levelprogress.send(f'▿ To {nickname} | 等级清谱查询 - 被禁止\n{username} 不允许使用此方式查询牌子进度。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+        return
+    else:
+        song_played = []
+        song_remain = []
+        if res.groups()[1].lower() in scoreRank:
+            achievement = achievementList[scoreRank.index(res.groups()[1].lower()) - 1]
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and song['achievements'] < achievement:
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1].lower() in comboRank:
+            combo_index = comboRank.index(res.groups()[1].lower())
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and ((song['fc'] and combo_rank.index(song['fc']) < combo_index) or not song['fc']):
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        elif res.groups()[1].lower() in syncRank:
+            sync_index = syncRank.index(res.groups()[1].lower())
+            for song in player_data['verlist']:
+                if song['level'] == res.groups()[0] and ((song['fs'] and sync_rank.index(song['fs']) < sync_index) or not song['fs']):
+                    song_remain.append([song['id'], song['level_index']])
+                song_played.append([song['id'], song['level_index']])
+        for music in total_list:
+            for i, lv in enumerate(music.level[2:]):
+                if lv == res.groups()[0] and [int(music.id), i + 2] not in song_played:
+                    song_remain.append([int(music.id), i + 2])
+        song_remain = sorted(song_remain, key=lambda i: int(i[1]))
+        song_remain = sorted(song_remain, key=lambda i: int(i[0]))
+        songs = []
+        for song in song_remain:
+            music = total_list.by_id(str(song[0]))
+            songs.append([music.id, music.title, diffs[song[1]], music.ds[song[1]], music.stats[song[1]].difficulty, song[1]])
+        msg = ''
+        if len(song_remain) > 0:
+            if len(song_remain) < 50:
+                song_record = [[s['id'], s['level_index']] for s in player_data['verlist']]
+                msg += f'▼ To {nickname} | 清谱进度\n以下是 {"您" if not res.groups()[2] else res.groups()[2]} 的 Lv.{res.groups()[0]} 全谱面 {res.groups()[1].upper()} 的剩余曲目：\n'
+                for s in sorted(songs, key=lambda i: i[3]):
+                    self_record = ''
+                    if [int(s[0]), s[-1]] in song_record:
+                        record_index = song_record.index([int(s[0]), s[-1]])
+                        if res.groups()[1].lower() in scoreRank:
+                            self_record = str(player_data['verlist'][record_index]['achievements']) + '%'
+                        elif res.groups()[1].lower() in comboRank:
+                            if player_data['verlist'][record_index]['fc']:
+                                self_record = comboRank[combo_rank.index(player_data['verlist'][record_index]['fc'])].upper()
+                        elif res.groups()[1].lower() in syncRank:
+                            if player_data['verlist'][record_index]['fs']:
+                                self_record = syncRank[sync_rank.index(player_data['verlist'][record_index]['fs'])].upper()
+                    if self_record == "":
+                        self_record = "暂无"
+                    msg += f'Track {s[0]} > {s[1]} | {s[2]}\nBase: {s[3]} 相对难度: {s[4]} 当前达成率: {self_record}'.strip() + '\n\n'
+            else:
+                await levelprogress.finish(f'▾ To {nickname} | 清谱进度\n{"您" if not res.groups()[2] else res.groups()[2]} 还有 {len(song_remain)} 首 Lv.{res.groups()[0]} 的曲目还没有达成 {res.groups()[1].upper()},加油推分吧！')
+        else:
+            await levelprogress.finish(f'▾ To {nickname} | 清谱完成\n恭喜 {"您" if not res.groups()[2] else res.groups()[2]} 达成 Lv.{res.groups()[0]} 全谱面 {res.groups()[1].upper()}！')
+        await levelprogress.send(MessageSegment.image(f"base64://{image_to_base64(text_to_image(msg.strip())).decode()}"))
+
+rankph = on_command('查看排行', aliases={'查看排名'})
+
+@rankph.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    async with aiohttp.request("GET", "https://www.diving-fish.com/api/maimaidxprober/rating_ranking") as resp:
+        rank_data = await resp.json()
+        msg = f'▾ Rating TOP50 排行榜\n截止 {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}，Diving-Fish 查分器网站已注册用户 Rating 排行：\n'
+        for i, ranker in enumerate(sorted(rank_data, key=lambda r: r['ra'], reverse=True)[:50]):
+            msg += f'TOP {i + 1}> {ranker["username"]}  DX Rating:{ranker["ra"]}\n'
+        await rankph.send(MessageSegment.image(f"base64://{image_to_base64(text_to_image(msg.strip())).decode()}"))
+
+
+rise_score = on_regex(r'^我要在?([0-9]+\+?)?上([0-9]+)分\s?(.+)?')
+
+@rise_score.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    mt = event.message_type
+    regex = "我要在?([0-9]+\+?)?上([0-9]+)分\s?(.+)?"
+    res = re.match(regex, str(event.get_message()).lower())
+    scoreRank = 'd c b bb bbb a aa aaa s s+ ss ss+ sss sss+'.lower().split(' ')
+    levelList = '1 2 3 4 5 6 7 7+ 8 8+ 9 9+ 10 10+ 11 11+ 12 12+ 13 13+ 14 14+ 15'.split(' ')
+    comboRank = 'fc fc+ ap ap+'.split(' ')
+    combo_rank = 'fc fcp ap app'.split(' ')
+    syncRank = 'fs fs+ fdx fdx+'.split(' ')
+    sync_rank = 'fs fsp fdx fdxp'.split(' ')
+    achievementList = [50.0, 60.0, 70.0, 75.0, 80.0, 90.0, 94.0, 97.0, 98.0, 99.0, 99.5, 100.0, 100.5]
+    nickname = event.sender.nickname
+    db = get_driver().config.db
+    c = await db.cursor()
+    if res.groups()[0] and res.groups()[0] not in levelList:
+        await rise_score.finish(f"▿ To {nickname} | 参数错误\n最低是1，最高是15，您这整了个{res.groups()[0]}......故意找茬的吧？")
+        return
+    if not res.groups()[2]:
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+        else:
+            payload = {'qq': str(event.get_user_id())}
+    else:
+        payload = {'username': res.groups()[2].strip()}
+    player_data, success = await get_player_data(payload)
+    if success == 400:
+        await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    elif success == 403:
+        await rise_score.send(f'▿ To {nickname} | 犽的锦囊 - 被禁止\n{username} 不允许使用此方式查询。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+        return
+    else:
+        dx_ra_lowest = 999
+        sd_ra_lowest = 999
+        player_dx_list = []
+        player_sd_list = []
+        music_dx_list = []
+        music_sd_list = []
+        for dx in player_data['charts']['dx']:
+            dx_ra_lowest = min(dx_ra_lowest, dx['ra'])
+            player_dx_list.append([int(dx['song_id']), int(dx["level_index"]), int(dx['ra'])])
+        for sd in player_data['charts']['sd']:
+            sd_ra_lowest = min(sd_ra_lowest, sd['ra'])
+            player_sd_list.append([int(sd['song_id']), int(sd["level_index"]), int(sd['ra'])])
+        player_dx_id_list = [[d[0], d[1]] for d in player_dx_list]
+        player_sd_id_list = [[s[0], s[1]] for s in player_sd_list]
+        for music in total_list:
+            for i, achievement in enumerate(achievementList):
+                for j, ds in enumerate(music.ds):
+                    if res.groups()[0] and music['level'][j] != res.groups()[0]: continue
+                    if music.is_new:
+                        music_ra = computeRa(ds, achievement)
+                        if music_ra < dx_ra_lowest: continue
+                        if [int(music.id), j] in player_dx_id_list:
+                            player_ra = player_dx_list[player_dx_id_list.index([int(music.id), j])][2]
+                            if music_ra - player_ra == int(res.groups()[1]) and [int(music.id), j, music_ra] not in player_dx_list:
+                                music_dx_list.append([music, diffs[j], ds, achievement, scoreRank[i + 1].upper(), music_ra, music.stats[j].difficulty])
+                        else:
+                            if music_ra - dx_ra_lowest == int(res.groups()[1]) and [int(music.id), j, music_ra] not in player_dx_list:
+                                music_dx_list.append([music, diffs[j], ds, achievement, scoreRank[i + 1].upper(), music_ra, music.stats[j].difficulty])
+                    else:
+                        music_ra = computeRa(ds, achievement)
+                        if music_ra < sd_ra_lowest: continue
+                        if [int(music.id), j] in player_sd_id_list:
+                            player_ra = player_sd_list[player_sd_id_list.index([int(music.id), j])][2]
+                            if music_ra - player_ra == int(res.groups()[1]) and [int(music.id), j, music_ra] not in player_sd_list:
+                                music_sd_list.append([music, diffs[j], ds, achievement, scoreRank[i + 1].upper(), music_ra, music.stats[j].difficulty])
+                        else:
+                            if music_ra - sd_ra_lowest == int(res.groups()[1]) and [int(music.id), j, music_ra] not in player_sd_list:
+                                music_sd_list.append([music, diffs[j], ds, achievement, scoreRank[i + 1].upper(), music_ra, music.stats[j].difficulty])
+        if len(music_dx_list) == 0 and len(music_sd_list) == 0:
+            await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 无匹配乐曲\n没有找到这样的乐曲。")
+            return
+        elif len(music_dx_list) + len(music_sd_list) > 60:
+            await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 结果过多\n结果太多啦...一共我查到{len(res)} 条符合条件的歌!\n缩小一下查询范围吧。")
+            return
+        msg = f'▼ To {nickname} | 犽的锦囊 - 升 {res.groups()[1]} 分攻略\n'
+        if len(music_sd_list) != 0:
+            msg += f'----- B25 区域升分推荐 (旧版本乐曲) -----\n'
+            for music, diff, ds, achievement, rank, ra, difficulty in sorted(music_sd_list, key=lambda i: int(i[0]['id'])):
+                msg += f'Track {music["id"]}> {music["title"]} | {diff}\n定数: {ds} 要求的达成率: {achievement} 分数线: {rank} Rating: {ra} 相对难度: {difficulty}\n\n'
+        if len(music_dx_list) != 0:
+            msg += f'----- B15 区域升分推荐 (当前版本乐曲) -----\n'
+            for music, diff, ds, achievement, rank, ra, difficulty in sorted(music_dx_list, key=lambda i: int(i[0]['id'])):
+                msg += f'Track {music["id"]}> {music["title"]} | {diff}\n定数: {ds} 要求的达成率: {achievement} 分数线: {rank} Rating: {ra} 相对难度: {difficulty}\n\n'
+        await rise_score.send(MessageSegment.image(f"base64://{image_to_base64(text_to_image(msg.strip())).decode()}"))
+
+base = on_command("底分分析", aliases={"rating分析"})
+
+@base.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    username = str(event.get_message()).strip()
+    nickname = event.sender.nickname
+    db = get_driver().config.db
+    c = await db.cursor()
+    mt = event.message_type
+    if username == "":
+        if mt == "guild":
+            await c.execute(f'select * from gld_table where uid="{event.user_id}"')
+            data = await c.fetchone()
+            if data is None:
+                await base.send(f"▿ To {nickname} | 底分分析 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                return
+            else:
+                payload = {'qq': str(data[0])}
+                name = "您"
+        else:
+            payload = {'qq': str(event.get_user_id())}
+            name = "您"
+    else:
+        payload = {'username': username}
+        name = username
+    obj, success = await get_player_data(payload)
+    if success == 400:
+        await base.send(f"▿ To {nickname} | 底分分析 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        return
+    elif success == 403:
+        await base.send(f'▿ To {nickname} | 底分分析 - 被禁止\n{username} 不允许使用此方式查询。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+        return
+    else:
+        try:
+            sd_best = BestList(25)
+            dx_best = BestList(15)
+            dx: List[Dict] = obj["charts"]["dx"]
+            sd: List[Dict] = obj["charts"]["sd"]
+            for c in sd:
+                sd_best.push(ChartInfo.from_json(c))
+            for c in dx:
+                dx_best.push(ChartInfo.from_json(c))
+            sd_best_max_sc = sd_best[0].ra
+            ds_sd_best_max = sd_best[0].ds
+            ds_sd_best_min = sd_best[len(sd_best) - 1].ds
+            sd_best_min_sc = sd_best[len(sd_best) - 1].ra
+            dx_best_max_sc = dx_best[0].ra
+            ds_dx_best_max = dx_best[0].ds
+            ds_dx_best_min = dx_best[len(dx_best) - 1].ds
+            dx_best_min_sc = dx_best[len(dx_best) - 1].ra
+            maxuse = 0
+            minuse = 0
+            maxuse_dx = 0
+            minuse_dx = 0
+            if sd_best[0].achievement >= 100.5:
+                max_sssp = ds_sd_best_max
+            elif sd_best[0].achievement < 100.5 and sd_best[0].achievement >= 100:
+                max_sss = ds_sd_best_max
+                maxuse = 1
+            elif sd_best[0].achievement < 100 and sd_best[0].achievement >= 99.5:
+                max_ssp = ds_sd_best_max
+                maxuse = 2
+            elif sd_best[0].achievement < 99.5 and sd_best[0].achievement >= 99:
+                max_ss = ds_sd_best_max
+                maxuse = 3
+            elif sd_best[0].achievement < 99 and sd_best[0].achievement >= 98:
+                max_sp = ds_sd_best_max
+                maxuse = 4
+            elif sd_best[0].achievement < 98 and sd_best[0].achievement >= 97:
+                max_s = ds_sd_best_max
+                maxuse = 5
+            else:
+                raise ValueError("请您注意: 此账号 Best 40 B25 中最高达成率小于 Rank S的要求。请继续加油！")
+            if sd_best[len(sd_best) - 1].achievement >= 100.5:
+                min_sssp = ds_sd_best_min
+            elif sd_best[len(sd_best) - 1].achievement < 100.5 and sd_best[len(sd_best) - 1].achievement >= 100:
+                min_sss = ds_sd_best_min
+                minuse = 1
+            elif sd_best[len(sd_best) - 1].achievement < 100 and sd_best[len(sd_best) - 1].achievement >= 99.5:
+                min_ssp = ds_sd_best_min
+                minuse = 2
+            elif sd_best[len(sd_best) - 1].achievement < 99.5 and sd_best[len(sd_best) - 1].achievement >= 99:
+                min_ss = ds_sd_best_min
+                minuse = 3
+            elif sd_best[len(sd_best) - 1].achievement < 99 and sd_best[len(sd_best) - 1].achievement >= 98:
+                min_sp = ds_sd_best_min
+                minuse = 4
+            elif sd_best[len(sd_best) - 1].achievement < 98 and sd_best[len(sd_best) - 1].achievement >= 97:
+                min_s = ds_sd_best_min
+                minuse = 5
+            else:
+                raise ValueError("请您注意: 此账号 Best 40 B25 中最低达成率小于 Rank S的要求。请继续加油！")
+            if maxuse == 0:
+                max_sss = max_sssp + 0.6
+                max_ssp = max_sssp + 1
+                max_ss = max_sssp + 1.2
+                max_sp = max_sssp + 1.7
+                max_s = max_sssp + 1.9
+            elif maxuse == 1:
+                max_sssp = max_sss - 0.6
+                max_ssp = max_sss + 0.4
+                max_ss = max_sss + 0.6
+                max_sp = max_sss + 1.1
+                max_s = max_sss + 1.3
+            elif maxuse == 2:
+                max_sssp = max_ssp - 1
+                max_sss = max_ssp - 0.4
+                max_ss = max_ssp + 0.2
+                max_sp = max_ssp + 0.7
+                max_s = max_ssp + 0.9
+            elif maxuse == 3:
+                max_sssp = max_ss - 1.2
+                max_sss = max_ss - 0.6
+                max_ssp = max_ss - 0.2
+                max_sp = max_ss + 0.5
+                max_s = max_ss + 0.7
+            elif maxuse == 4:
+                max_sssp = max_sp - 1.7
+                max_sss = max_sp - 1.1
+                max_ssp = max_sp - 0.7
+                max_ss = max_sp - 0.5
+                max_s = max_sp + 0.2
+            else:
+                max_sssp = max_s - 1.9
+                max_sss = max_s - 1.3
+                max_ssp = max_s - 0.9
+                max_ss = max_s - 0.7
+                max_sp = max_s - 0.2
+            if minuse == 0:
+                min_sss = min_sssp + 0.6
+                min_ssp = min_sssp + 1
+                min_ss = min_sssp + 1.2
+                min_sp = min_sssp + 1.7
+                min_s = min_sssp + 1.9
+            elif minuse == 1:
+                min_sssp = min_sss - 0.6
+                min_ssp = min_sss + 0.4
+                min_ss = min_sss + 0.6
+                min_sp = min_sss + 1.1
+                min_s = min_sss + 1.3
+            elif minuse == 2:
+                min_sssp = min_ssp - 1
+                min_sss = min_ssp - 0.4
+                min_ss = min_ssp + 0.2
+                min_sp = min_ssp + 0.7
+                min_s = min_ssp + 0.9
+            elif minuse == 3:
+                min_sssp = min_ss - 1.2
+                min_sss = min_ss - 0.6
+                min_ssp = min_ss - 0.2
+                min_sp = min_ss + 0.5
+                min_s = min_ss + 0.7
+            elif minuse == 4:
+                min_sssp = min_sp - 1.7
+                min_sss = min_sp - 1.1
+                min_ssp = min_sp - 0.7
+                min_ss = min_sp - 0.5
+                min_s = min_sp + 0.2
+            else:
+                min_sssp = min_s - 1.9
+                min_sss = min_s - 1.3
+                min_ssp = min_s - 0.9
+                min_ss = min_s - 0.7
+                min_sp = min_s - 0.2
+            if dx_best[0].achievement >= 100.5:
+                max_sssp_dx = ds_dx_best_max
+            elif dx_best[0].achievement < 100.5 and dx_best[0].achievement >= 100:
+                max_sss_dx = ds_dx_best_max
+                maxuse_dx = 1
+            elif dx_best[0].achievement < 100 and dx_best[0].achievement >= 99.5:
+                max_ssp_dx = ds_dx_best_max
+                maxuse_dx = 2
+            elif dx_best[0].achievement < 99.5 and dx_best[0].achievement >= 99:
+                max_ss_dx = ds_dx_best_max
+                maxuse_dx = 3
+            elif dx_best[0].achievement < 99 and dx_best[0].achievement >= 98:
+                max_sp_dx = ds_dx_best_max
+                maxuse_dx = 4
+            elif dx_best[0].achievement < 98 and dx_best[0].achievement >= 97:
+                max_s_dx = ds_dx_best_max
+                maxuse_dx = 5
+            else:
+                raise ValueError("请您注意: 此账号 Best 40 B15 中最高达成率小于 Rank S的要求。请继续加油！")
+            if dx_best[len(dx_best) - 1].achievement >= 100.5:
+                min_sssp_dx = ds_dx_best_min
+            elif dx_best[len(dx_best) - 1].achievement < 100.5 and dx_best[len(dx_best) - 1].achievement >= 100:
+                min_sss_dx = ds_dx_best_min
+                minuse_dx = 1
+            elif dx_best[len(dx_best) - 1].achievement < 100 and dx_best[len(dx_best) - 1].achievement >= 99.5:
+                min_ssp_dx = ds_dx_best_min
+                minuse_dx = 2
+            elif dx_best[len(dx_best) - 1].achievement < 99.5 and dx_best[len(dx_best) - 1].achievement >= 99:
+                min_ss_dx = ds_dx_best_min
+                minuse_dx = 3
+            elif dx_best[len(dx_best) - 1].achievement < 99 and dx_best[len(dx_best) - 1].achievement >= 98:
+                min_sp_dx = ds_dx_best_min
+                minuse_dx = 4
+            elif dx_best[len(dx_best) - 1].achievement < 98 and dx_best[len(dx_best) - 1].achievement >= 97:
+                min_s_dx = ds_dx_best_min
+                minuse_dx = 5
+            else:
+                raise ValueError("请您注意: 此账号 Best 40 B15 中最低达成率小于 Rank S 的要求。请继续加油！")
+            if maxuse_dx == 0:
+                max_sss_dx = max_sssp_dx + 0.6
+                max_ssp_dx = max_sssp_dx + 1
+                max_ss_dx = max_sssp_dx + 1.2
+                max_sp_dx = max_sssp_dx + 1.7
+                max_s_dx = max_sssp_dx + 1.9
+            elif maxuse_dx == 1:
+                max_sssp_dx = max_sss_dx - 0.6
+                max_ssp_dx = max_sss_dx + 0.4
+                max_ss_dx = max_sss_dx + 0.6
+                max_sp_dx = max_sss_dx + 1.1
+                max_s_dx = max_sss_dx + 1.3
+            elif maxuse_dx == 2:
+                max_sssp_dx = max_ssp_dx - 1
+                max_sss_dx = max_ssp_dx - 0.4
+                max_ss_dx = max_ssp_dx + 0.2
+                max_sp_dx = max_ssp_dx + 0.7
+                max_s_dx = max_ssp_dx + 0.9
+            elif maxuse_dx == 3:
+                max_sssp_dx = max_ss_dx - 1.2
+                max_sss_dx = max_ss_dx - 0.6
+                max_ssp_dx = max_ss_dx - 0.2
+                max_sp_dx = max_ss_dx + 0.5
+                max_s_dx = max_ss_dx + 0.7
+            elif maxuse_dx == 4:
+                max_sssp_dx = max_sp_dx - 1.7
+                max_sss_dx = max_sp_dx - 1.1
+                max_ssp_dx = max_sp_dx - 0.7
+                max_ss_dx = max_sp_dx - 0.5
+                max_s_dx = max_sp_dx + 0.2
+            else:
+                max_sssp_dx = max_s_dx - 1.9
+                max_sss_dx = max_s_dx - 1.3
+                max_ssp_dx = max_s_dx - 0.9
+                max_ss_dx = max_s_dx - 0.7
+                max_sp_dx = max_s_dx - 0.2
+            if minuse_dx == 0:
+                min_sss_dx = min_sssp_dx + 0.6
+                min_ssp_dx = min_sssp_dx + 1
+                min_ss_dx = min_sssp_dx + 1.2
+                min_sp_dx = min_sssp_dx + 1.7
+                min_s_dx = min_sssp_dx + 1.9
+            elif minuse_dx == 1:
+                min_sssp_dx = min_sss_dx - 0.6
+                min_ssp_dx = min_sss_dx + 0.4
+                min_ss_dx = min_sss_dx + 0.6
+                min_sp_dx = min_sss_dx + 1.1
+                min_s_dx = min_sss_dx + 1.3
+            elif minuse_dx == 2:
+                min_sssp_dx = min_ssp_dx - 1
+                min_sss_dx = min_ssp_dx - 0.4
+                min_ss_dx = min_ssp_dx + 0.2
+                min_sp_dx = min_ssp_dx + 0.7
+                min_s_dx = min_ssp_dx + 0.9
+            elif minuse_dx == 3:
+                min_sssp_dx = min_ss_dx - 1.2
+                min_sss_dx = min_ss_dx - 0.6
+                min_ssp_dx = min_ss_dx - 0.2
+                min_sp_dx = min_ss_dx + 0.5
+                min_s_dx = min_ss_dx + 0.7
+            elif minuse_dx == 4:
+                min_sssp_dx = min_sp_dx - 1.7
+                min_sss_dx = min_sp_dx - 1.1
+                min_ssp_dx = min_sp_dx - 0.7
+                min_ss_dx = min_sp_dx - 0.5
+                min_s_dx = min_sp_dx + 0.2
+            else:
+                min_sssp_dx = min_s_dx - 1.9
+                min_sss_dx = min_s_dx - 1.3
+                min_ssp_dx = min_s_dx - 0.9
+                min_ss_dx = min_s_dx - 0.7
+                min_sp_dx = min_s_dx - 0.2
+            max_sssp = round(max_sssp, 1)
+            max_sss = round(max_sss, 1)
+            max_ssp = round(max_ssp, 1)
+            max_ss = round(max_ss, 1)
+            max_sp = round(max_sp, 1)
+            max_s = round(max_s, 1)
+            min_sssp = round(min_sssp, 1)
+            min_sss = round(min_sss, 1)
+            min_ssp = round(min_ssp, 1)
+            min_ss = round(min_ss, 1)
+            min_sp = round(min_sp, 1)
+            min_s = round(min_s, 1)
+            max_sssp_dx = round(max_sssp_dx, 1)
+            max_sss_dx = round(max_sss_dx, 1)
+            max_ssp_dx = round(max_ssp_dx, 1)
+            max_ss_dx = round(max_ss_dx, 1)
+            max_sp_dx = round(max_sp_dx, 1)
+            max_s_dx = round(max_s_dx, 1)
+            min_sssp_dx = round(min_sssp_dx, 1)
+            min_sss_dx = round(min_sss_dx, 1)
+            min_ssp_dx = round(min_ssp_dx, 1)
+            min_ss_dx = round(min_ss_dx, 1)
+            min_sp_dx = round(min_sp_dx, 1)
+            min_s_dx = round(min_s_dx, 1)
+            if max_sssp > 15.0 or max_sssp < 1.0:
+                max_sssp = ""
+            if max_ssp > 15.0 or max_ssp < 1.0:
+                max_ssp = ""
+            if max_sp > 15.0 or max_sp < 1.0:
+                max_sp = ""
+            if max_sss > 15.0 or max_sss < 1.0:
+                max_sss = ""
+            if max_ss > 15.0 or max_ss < 1.0:
+                max_ss = ""
+            if max_s > 15.0 or max_s < 1.0:
+                max_s = ""
+            if min_sssp > 15.0 or min_sssp < 1.0:
+                min_sssp = ""
+            if min_ssp > 15.0 or min_ssp < 1.0:
+                min_ssp = ""
+            if min_sp > 15.0 or min_sp < 1.0:
+                min_sp = ""
+            if min_sss > 15.0 or min_sss < 1.0:
+                min_sss = ""
+            if min_ss > 15.0 or min_ss < 1.0:
+                min_ss = ""
+            if min_s > 15.0 or min_s < 1.0:
+                min_s = ""
+            if max_sssp_dx > 15.0 or max_sssp_dx < 1.0:
+                max_sssp_dx = ""
+            if max_ssp_dx > 15.0 or max_ssp_dx < 1.0:
+                max_ssp_dx = ""
+            if max_sp_dx > 15.0 or max_sp_dx < 1.0:
+                max_sp_dx = ""
+            if max_sss_dx > 15.0 or max_sss_dx < 1.0:
+                max_sss_dx = ""
+            if max_ss_dx > 15.0 or max_ss_dx < 1.0:
+                max_ss_dx = ""
+            if max_s_dx > 15.0 or max_s_dx < 1.0:
+                max_s_dx = ""
+            if min_sssp_dx > 15.0 or min_sssp_dx < 1.0:
+                min_sssp_dx = ""
+            if min_ssp_dx > 15.0 or min_ssp_dx < 1.0:
+                min_ssp_dx = ""
+            if min_sp_dx > 15.0 or min_sp_dx < 1.0:
+                min_sp_dx = ""
+            if min_sss_dx > 15.0 or min_sss_dx < 1.0:
+                min_sss_dx = ""
+            if min_ss_dx > 15.0 or min_ss_dx < 1.0:
+                min_ss_dx = ""
+            if min_s_dx > 15.0 or min_s_dx < 1.0:
+                min_s_dx = ""
+            msg = f"▾ To {nickname} | 底分分析\n----------------------\nB25 -> Max: {sd_best_max_sc}  Min: {sd_best_min_sc} \nB15 -> Max: {dx_best_max_sc}  Min: {dx_best_min_sc} \n----------------------"
+            msg += f"\nType | SSS+ | SSS | SS+ | SS\n[B25]\nMax | {max_sssp}   {max_sss}   {max_ssp}   {max_ss}\n"
+            msg += f"Min | {min_sssp}   {min_sss}   {min_ssp}   {min_ss}\n[B15]\nMax | {max_sssp_dx}   {max_sss_dx}   {max_ssp_dx}   {max_ss_dx}\nMin | {min_sssp_dx}   {min_sss_dx}   {min_ssp_dx}   {min_ss_dx}\n"
+            msg += f"----------------------\n{name}的历史歌曲中最高 Rating (B25 天花板)大约是"
+            if max_sssp != "":
+                msg += f" {max_sssp} 的 SSS+"
+            if max_sss != "":
+                msg += f"、{max_sss} 的 SSS"
+            if max_ssp != "":
+                msg += f"、{max_ssp} 的 SS+"
+            if max_ss != "":
+                msg += f"、{max_ss} 的 SS"
+            if max_sp != "":
+                msg += f"、{max_sp} 的 S+"
+            if max_s != "":
+                msg += f"、{max_s} 的 S"
+            msg += "；\n最低 Rating (B25 地板)大约是"
+            if min_sssp != "":
+                msg += f" {min_sssp} 的 SSS+"
+            if min_sss != "":
+                msg += f"、{min_sss} 的 SSS"
+            if min_ssp != "":
+                msg += f"、{min_ssp} 的 SS+"
+            if min_ss != "":
+                msg += f"、{min_ss} 的 SS"
+            if min_sp != "":
+                msg += f"、{min_sp} 的 S+"
+            if min_s != "":
+                msg += f"、{min_s} 的 S"
+            msg += f"。\n{name}的当前大版本歌曲中的最高 Rating (B15 天花板)大约是"
+            if max_sssp_dx != "":
+                msg += f" {max_sssp_dx} 的 SSS+"
+            if max_sss_dx != "":
+                msg += f"、{max_sss_dx} 的 SSS"
+            if max_ssp_dx != "":
+                msg += f"、{max_ssp_dx} 的 SS+"
+            if max_ss_dx != "":
+                msg += f"、{max_ss_dx} 的 SS"
+            if max_sp_dx != "":
+                msg += f"、{max_sp_dx} 的 S+"
+            if max_s_dx != "":
+                msg += f"、{max_s_dx} 的 S"
+            msg += "；\n最低 Rating (B15 地板)大约是"
+            if min_sssp_dx != "":
+                msg += f" {min_sssp_dx} 的 SSS+"
+            if min_sss_dx != "":
+                msg += f"、{min_sss_dx} 的 SSS"
+            if min_ssp_dx != "":
+                msg += f"、{min_ssp_dx} 的 SS+"
+            if min_ss_dx != "":
+                msg += f"、{min_ss_dx} 的 SS"
+            if min_sp_dx != "":
+                msg += f"、{min_sp_dx} 的 S+"
+            if min_s_dx != "":
+                msg += f"、{min_s_dx} 的 S"
+            msg += "。\n请注意：Best 15 按照全部歌曲的最高等级 (即 15.0) 显示；如需升分推荐，请移步犽的锦囊。"
+            await base.send(msg)
+        except Exception as e:
+            await base.send(f"▿ To {nickname} | 底分分析 - 错误\n出现意外错误啦。\n[Exception Occurred]\n{e}")
+            return
