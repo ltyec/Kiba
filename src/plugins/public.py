@@ -397,7 +397,7 @@ snmb = on_regex("^随个")
 @snmb.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     try:
-        if snmb=on_regex("随个([男女]?)群友"):
+        if snmb == on_regex("随个([男女]?)群友"):
             return
         mt = event.message_type
         if mt == "guild":
