@@ -1530,26 +1530,20 @@ high_eq = on_regex(r'低情商.+高情商.+')
 @high_eq.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     regex = '低情商(.+)高情商(.+)'
-    groups = re.match(regex, str(event.get_message())).groups()
-    left = groups[0].strip()
-    right = groups[1].strip()
+    left = re.match(regex, str(event.get_message())).group(0)
+    right = re.match(regex, str(event.get_message())).group(1)
     if len(left) > 15 or len(right) > 15:
-        await high_eq.send("▿ Kiba Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
+        await high_eq.send("▿ lmm Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
         return
     img_p = Image.open(path)
-    draw_text(img_p, left, 0)
-    draw_text(img_p, right, 400)
-    await high_eq.send(Message([{
-        "type": "text",
-        "data": {
-            "text": f"▾ T‍o {nickname} | Kiba Image Creator - 低高情商\n"
-        }
-    },{
-        "type": "image",
-        "data": {
-            "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
-        }
-    }]))
+        draw_text(img_p, left, 0)
+        draw_text(img_p, right, 400)
+        await poke.send(Message([{
+            "type": "image",
+            "data": {
+                "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
+            }
+        }]))
 
 
 jlpx = on_command('金龙盘旋')
