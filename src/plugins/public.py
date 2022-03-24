@@ -28,7 +28,7 @@ helper = on_command('help', aliases={'about'})
 
 @helper.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    await helper.send("▾ 关于\n犽(Kiba) | MaxParty\n版本: 3.2 (3.201.220215)\n----------------------\nGithub:\nhttps://github.com/Killua-Blitz/Kiba\nProject Kiba Credits:\n@Killua Blitz\n@Diving-Fish (Mai-Bot)\n@BlueDeer233 (maimaiDX)\n@Yuri-YuzuChaN (maimaiDX/Arcaea)\n@mnixry (nonebot_guild_patch)\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help")
+    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
    
 help_others = on_command('public.help')
 
@@ -37,89 +37,54 @@ async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''▼ 其它功能 | Commands For Public                                             
 ------------------------------------------------------------------------------------------------------------------------------
 戳一戳                                                                                  来戳戳我？
-
 本群戳一戳情况                                                                    查看一下群里有几位杰出的无聊人
-
 今日雀魂                                                                               查看今天的雀魂运势
-
 mjxp                                                                                     看看你今天要做什么牌捏？
-
 低情商<str1>高情商<str2>                                                 生成一张低情商高情商图片，
                                                                                               把str1/2换成自己的话。
-
 gocho <str1> <str2>                                                         生成一张gocho图。
-
 金龙盘旋 <str1> <str2> <str3>                                         生成一张金龙盘旋图。
-
 投骰子<数量>                                                                       在线投骰子(?)
 投百面骰子<数量>                                                             * 可以选择六面/百面
-
-                                                                                              这个功能可以随机禁言你1-600秒，前提小犽是管理员。
+                                                                                              这个功能可以随机禁言你1-600秒，前提恋萌萌是管理员。
 烟我                                                                                    * 注意:为防止误触发，
-                                                                                              这个功能你需要at一下小犽再说这个命令才能执行。
-
+                                                                                              这个功能你需要at一下恋萌萌再说这个命令才能执行。
                                                                                                群里摇人。
-随个[男/女]群友                                                                    你也可以不带参数直接说“随个”然后后面加啥都可以。
-                                                                                               当然小犽容易骂你就是了。
-
+随个[男/女]群友                                                                    你也可以不带参数直接说"随个"然后后面加啥都可以。
+                                                                                               当然恋萌萌容易骂你就是了。
 帮选                                                                                      帮你选 
-
 轮盘                                                                                      与帮选类似，不过增加了选项概率。
-
-
 模拟抽卡/抽卡模拟                                                               抽卡模拟器
-
 模拟十连/十连模拟                                                               抽卡模拟器 (十连模式)
-
 我的抽卡情况/抽卡情况                                                        查看抽卡模拟器的抽卡情况
 ------------------------------------------------------------------------------------------------------------------------------
-
 ▼ 漂流社区 | Bottle Public Community                                           
 ------------------------------------------------------------------------------------------------------------------------------
-扔瓶子                                                                                   扔个瓶子给犽。说不定会被别人读到哦。
-
-捞瓶子                                                                                    捞一个瓶子，看看上面留言什么了？
-
-
-扔瓶子                                                                                   扔个瓶子给犽。说不定会被别人读到哦。
-
-捞瓶子                                                                                   捞一个瓶子，看看上面留言什么了？
-
+扔瓶子                                                                                   扔个瓶子给恋萌萌。说不定会被别人读到哦。
+捞瓶子                                                                                    捞一个瓶子，怎么全几把是东营群友
 回复瓶子 <漂流瓶 ID>                                                         给这个瓶子做评论吧！
  
 看回复 <漂流瓶 ID>                                                             查看漂流瓶下面的回复！
-
-
 删瓶子 <漂流瓶 ID>                                                             删除您发布的漂流瓶。
                                                                                              * 管理员使用此指令可删除其他人瓶子。
-
 当前瓶子数量                                                                        查询社区当前漂流瓶子数量，此命令不受社区限制。
-
 我的漂流瓶                                                                           我的漂流社区情况
 ------------------------------------------------------------------------------------------------------------------------------
-
 ▼ 频道设置 | Channel                                            
 ------------------------------------------------------------------------------------------------------------------------------
 您可能需要绑定QQ号来免账号使用以上部分功能。绑定功能如下：
-
 绑定 <QQ号>
-
 解绑
 ------------------------------------------------------------------------------------------------------------------------------
-
 ▼ 管理员模块控制 | Administrative
 ------------------------------------------------------------------------------------------------------------------------------
 设置漂流社区: 
 漂流瓶设置 <完全启(禁)用/启(禁)用扔瓶子/启(禁)用捞瓶子/启(禁)用扔瓶子/启(禁)用回复/启（禁）用慢速(群聊可用)> 
 <QQ号(可选)/慢速间隔时间(秒,可选)> <群号(可选)>
-
 社区设置帮助请直接输入"漂流瓶设置"
-
 设置戳一戳: 戳一戳设置 <启用/限制 (时间-秒)/禁用>
 戳一戳帮助请直接输入"戳一戳设置"
-
 删瓶子: 见上表可用命令中的说明，管理员允许删除任何人的漂流瓶。
-
 ------------------------------------------------------------------------------------------------------------------------------'''
     await help_others.send(Message([{
         "type": "image",
@@ -128,11 +93,9 @@ gocho <str1> <str2>                                                         生�
         }
     }]))
 
-
 async def _group_poke(bot: Bot, event: Event, state: dict) -> bool:
     value = (event.notice_type == "notify" and event.sub_type == "poke" and event.target_id == int(bot.self_id))
     return value
-
 
 poke = on_notice(rule=_group_poke, priority=10, block=True)
 poke_dict = defaultdict(lambda: defaultdict(int))
@@ -185,9 +148,9 @@ async def _(bot: Bot, event: Event, state: T_State):
             }
         }]))
     elif r == 2:
-        await poke.send(Message('戳你🐎'))
+        await poke.send(Message('拍你🐎'))
     elif r == 3:
-        url = await get_jlpx('戳', '你妈', '闲着没事干')
+        url = await get_jlpx('拍', '你妈', '闲着没事干')
         await poke.send(Message([{
             "type": "image",
             "data": {
@@ -196,8 +159,8 @@ async def _(bot: Bot, event: Event, state: T_State):
         }]))
     elif r == 4:
         img_p = Image.open(path)
-        draw_text(img_p, '戳你妈', 0)
-        draw_text(img_p, '有尝试过玩Cytus II吗', 400)
+        draw_text(img_p, '拍你妈', 0)
+        draw_text(img_p, '有尝试过玩武盟DX吗', 400)
         await poke.send(Message([{
             "type": "image",
             "data": {
@@ -205,7 +168,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             }
         }]))
     elif r == 5:
-        await poke.send(Message('呜呜呜...不要再戳啦...'))
+        await poke.send(Message('呜呜呜...不要再拍啦...'))
     elif r <= 7 and r > 5:
         await poke.send(Message([{
             "type": "image",
@@ -221,17 +184,17 @@ async def _(bot: Bot, event: Event, state: T_State):
             }
         }]))
     elif r <= 17 and r > 12:
-        await poke.send(Message(f'好的....大家请各位戳刚刚戳我的那位。'))
+        await poke.send(Message(f'好的....大家请各位戳刚刚拍我帽子的那位。'))
     elif r <= 19 and r > 17:
         t = random.randint(60,90)
         try:
             await bot.set_group_ban(group_id=event.__getattribute__('group_id'), user_id=event.sender_id, duration=t)
-            await poke.send(f'别戳了！！烟你{t}秒冷静一下。')
+            await poke.send(f'别拍了！！烟你{t}秒冷静一下。')
         except Exception as e:
             print(e)
-            await poke.send(Message('一天到晚就知道戳戳戳，你不许戳了！(╬▔皿▔)╯'))
+            await poke.send(Message('一天到晚就知道拍拍拍，你不许拍了！(╬▔皿▔)╯'))
     elif r == 1:
-        await poke.send(Message('一天到晚就知道戳戳戳，戳自己肚皮不行吗？'))
+        await poke.send(Message('一天到晚就知道拍，拍自己肚皮不行吗？'))
     else:
         await poke.send(Message([{
             "type": "poke",
@@ -429,7 +392,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     except AttributeError:
         await random_person.finish("你不在群聊使用.....所以你随啥呢这是，这个要去群里用。")
 
-snmb = on_command("随个", priority=19)
+snmb = on_regex("^随个")
 
 @snmb.handle()
 async def _(bot: Bot, event: Event, state: T_State):
@@ -933,7 +896,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     db = get_driver().config.db
     c = await db.cursor()
     if str(event.user_id) not in Config.superuser:
-        await plp_clean.finish(f"▿ To {nickname} | 漂流社区: 洗瓶子 - 没有权限\n这个...只有小犽的管理员才可以清空瓶子。")
+        await plp_clean.finish(f"▿ To {nickname} | 漂流社区: 洗瓶子 - 没有权限\n这个...只有恋萌萌的管理员才可以清空瓶子。")
         return
     else:
         await c.execute(f'delete from plp_table')
@@ -1561,3 +1524,95 @@ async def _(bot: Bot, event: Event, state: T_State):
     s += f'抽卡次数：{data1[1]} 次。\n'
     s += f'★6: {data1[2]} 张  ★5: {data1[3]} 张\n★4: {data1[4]} 张  ★3: {data1[5]} 张\n★2: {data1[6]} 张  ★1: {data1[7]} 张'
     await acardcenter.send(s)
+    
+high_eq = on_regex(r'低情商.+高情商.+')
+
+@high_eq.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    regex = '低情商(.+)高情商(.+)'
+    groups = re.match(regex, str(event.get_message())).groups()
+    left = groups[0].strip()
+    right = groups[1].strip()
+    if len(left) > 15 or len(right) > 15:
+        await high_eq.send("▿ Kiba Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
+        return
+    img_p = Image.open(path)
+    draw_text(img_p, left, 0)
+    draw_text(img_p, right, 400)
+    await high_eq.send(Message([{
+        "type": "text",
+        "data": {
+            "text": f"▾ T‍o {nickname} | Kiba Image Creator - 低高情商\n"
+        }
+    },{
+        "type": "image",
+        "data": {
+            "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
+        }
+    }]))
+
+
+jlpx = on_command('金龙盘旋')
+
+
+@jlpx.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    argv = str(event.get_message()).strip().split(' ')
+    nickname = event.sender.nickname
+    if len(argv) != 3:
+        await jlpx.send("▿ Kiba Image Creator - 参数不足\n金龙盘旋需要三个参数！")
+        return
+    url = await get_jlpx(argv[0], argv[1], argv[2])
+    await jlpx.send(Message([{
+        "type": "text",
+        "data": {
+            "text": f"▾ T‍o {nickname} | Kiba Image Creator - 金龙盘旋\n"
+        }
+    },{
+        "type": "image",
+        "data": {
+            "file": f"{url}"
+        }
+    }]))
+
+
+gocho = on_command('gocho')
+
+
+@gocho.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    argv = str(event.get_message()).strip().split(' ')
+    if len(argv) != 2:
+        await jlpx.send("▿ Kiba Image Creator - 参数不足\nGocho 需要两个参数！")
+        return
+    i = generate(argv[0], argv[1])
+    await gocho.send(Message([{
+        "type": "text",
+        "data": {
+            "text": f"▾ T‍o {nickname} | Kiba Image Creator - Gocho\n"
+        }
+    },{
+        "type": "image",
+        "data": {
+            "file": f"base64://{str(image_to_base64(i), encoding='utf-8')}"
+        }
+    }]))
+
+
+img_template = on_command("img_template", aliases={"imgt"})
+
+
+@img_template.handle()
+async def _(bot: Bot, event: Event):
+    arg = event.get_message()
+    try:
+        base, img = await img_template_parser(arg)
+        b64 = await edit_base_img(base, img)
+        await img_template.send(Message([{
+            "type": "image",
+            "data": {
+                "file": f"base64://{str(b64, encoding='utf-8')}"
+            }
+        }]))
+    except Exception as e:
+        await img_template.send(f"▿ Kiba Image Templator - Exception\n[Exception Occurred]\n{str(e)}")
