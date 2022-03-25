@@ -395,7 +395,7 @@ Touch: {chart['notes'][3]} | Break: {chart['notes'][4]}'''
         except Exception as e:
             await query_chart.send(f"▿ 无匹配乐曲\n啊这...我没有找到这个歌。\n换一个试试吧。\n[Exception Occurred]\n{e}")
 
-xp_list = ['滴蜡熊', '幸隐', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '排队区', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)']
+xp_list = ['滴蜡熊', '性瘾', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '雷迪龙', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)', '百合咲', 'chu9', 'ppk', '太空烧鸡', 'liliana', '复读机', '木桶饭', '未琉', '一卡']
 
 jrxp = on_command('jrxp', aliases={'今日性癖'})
 
@@ -417,8 +417,8 @@ wm_list = ['拼机', '推分', '越级', '下埋', '夜勤', '练底力', '练�
 bwm_list_perfect = ['拆机:然后您被机修当场处决', '女装:怎么这么好康！（然后受到了欢迎）', '耍帅:看我耍帅还AP+', '击剑:Alea jacta est!(SSS+)', '打滴蜡熊:看我今天不仅推了分，还收了歌！', '日麻:看我三倍役满!!!你们三家全都起飞!!!', '出勤:不出则已，一出惊人，当场AP，羡煞众人。', '看手元:哦原来是这样！看了手元果真推分了。', '霸机:这么久群友都没来，霸机一整天不是梦！', '打Maipad: Maipad上收歌了，上机也收了。', '唱打: Let the bass kick! O-oooooooooo AAAAE-A-A-I-A-U- JO-oooooooooooo AAE-O-A-A-U-U-A- E-eee-ee-eee AAAAE-A-E-I-E-A- JO-ooo-oo-oo-oo EEEEO-A-AAA-AAAA O-oooooooooo AAAAE-A-A-I-A-U-......', '抓绝赞: 把把2600，轻松理论值！']
 bwm_list_bad = ['拆机:不仅您被机修当场处决，还被人尽皆知。', '女装:杰哥说你怎么这么好康！让我康康！！！（被堵在卫生间角落）', '耍帅:星星全都粉掉了......', '击剑:Alea jacta est!(指在线下真实击剑)', '打滴蜡熊:滴蜡熊打你。', '日麻:我居然立直放铳....等等..三倍役满??????', '出勤:当场分数暴毙，惊呆众人。', '看手元:手法很神奇，根本学不来。', '霸机:......群友曰:"霸机是吧？踢了！"', '打Maipad: 上机还是不大会......', '唱打: 被路人拍下上传到了某音。', '抓绝赞: 啊啊啊啊啊啊啊捏妈妈的我超！！！ --- 这是绝赞(好)的音效。']
 tips_list = ['在游戏过程中,请您不要大力拍打或滑动机器!', '建议您常多备一副手套！如果游玩时手套破裂或许会有大用！', '游玩时注意手指安全！意外戳到边框时若引发剧烈疼痛请立刻下机以休息手指，必要时可以选择就医。', '游玩过程中注意财物安全。自己的财物远比一个SSS+要更有价值。', '底力不够？建议下埋！不要强行越级，手癖难解。', '文明游玩，游戏要排队，不要做不遵守游戏规则的玩家！', '人品值和宜忌每天0点都会刷新，不喜欢总体运势可以通过这个指令再随一次。', '疫情防护，人人有责。在游玩结束后请主动佩戴口罩！', '出勤时注意交通安全，身体安全永远在第一位！', '迪拉熊不断吃绝赞？去找机修教训它。', '热知识：DX理论值是101.0000，但是旧框没有固定的理论值。', '冷知识：每个绝赞 Perfect 等级有 2600/2550/2500，俗称理论/50落/100落。']
-fx_list = ['东', '西', '南', '北']
-play_list = ['1P', '2P', '排队区']
+fx_list = ['东', '西', '南', '北', '南通']
+play_list = ['1P', '2P', '排队区', '群友身前', '群友身后']
 
 jrwm = on_command('今日运势', aliases={'今日舞萌'})
 
@@ -483,7 +483,7 @@ async def _(bot: Bot, event: Event, state: T_State):
         s += f'\n忌 ▷ 共 {bad_count} 项:\n'
         for i in range(bad_count):
             s += f'{wm_list[bad_value[i]]} '
-    s += f'\n\n◢ 犽的锦囊 - 运势版\nKiba 提示:\n{tips_list[tips_value]}\n'
+    s += f'\n\n◢ 鱼油的锦囊 - 运势版\nYuooo 提示:\n{tips_list[tips_value]}\n'
     s += "今日运势 - 锦囊推荐:\n"
     music = total_list[hash(qq) * now.day * now.month % len(total_list)]
     await jrwm.finish(Message([{"type": "text", "data": {"text": s}}] + song_txt(music)))
@@ -601,7 +601,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     name = re.match(regex, str(event.get_message())).groups()[0].strip().lower()
     nickname = event.sender.nickname
     if name not in music_aliases:
-        await find_song.finish(f"▿ To {nickname} | 别名查歌 - 错误\n这个别称太新了，我找不到这首歌啦。\n但是您可以帮助我收集歌曲的别名！戳链接加入 Kiba 歌曲别名收集计划:\nhttps://kdocs.cn/l/cdzsTdqaPFye")
+        await find_song.finish(f"▿ To {nickname} | 别名查歌 - 错误\n这个别称太新了，我找不到这首歌啦。\n但是您可以帮助我收集歌曲的别名！戳链接加入 鱼油 歌曲别名收集计划:\nhttps://kdocs.cn/l/cdzsTdqaPFye")
         return
     result_set = music_aliases[name]
     if len(result_set) == 1:
@@ -712,7 +712,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await best_50_pic.send(f"▿ To {nickname} | Best 40 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await best_50_pic.send(f"▿ To {nickname} | Best 40 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
@@ -754,7 +754,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await best_50_pic.send(f"▿ To {nickname} | Best 50 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await best_50_pic.send(f"▿ To {nickname} | Best 50 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
@@ -798,7 +798,7 @@ async def _(bot: Bot, event: Event):
             break
     su = Config.superuser
     if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in su:
-        await disable_guess_music.finish("▿ 猜歌 - 设置 - 无权限\n抱歉，只有群管理员/小犽管理者才有权调整猜歌设置。")
+        await disable_guess_music.finish("▿ 猜歌 - 设置 - 无权限\n抱歉，只有群管理员/恋萌萌管理者才有权调整猜歌设置。")
         return
     db = get_driver().config.db
     c = await db.cursor()
@@ -925,7 +925,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     now = datetime.datetime.now()
     c = await db.cursor()
     if event.message_type != "group":
-        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，群管理员/小犽管理者才有权调整店铺设置，请在群内再试一次。")
+        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，群管理员/恋萌萌管理者才有权调整店铺设置，请在群内再试一次。")
         return
     arg = str(event.get_message())
     group_members = await bot.get_group_member_list(group_id=event.group_id)
@@ -934,7 +934,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             break
     su = Config.superuser
     if m['role'] != 'owner' and m['role'] != 'admin' and str(m['user_id']) not in su:
-        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，只有群管理员/小犽管理者才有权调整店铺设置。")
+        await waiting_set.finish("▿ 出勤大数据 - 设置\n抱歉，只有群管理员/恋萌萌管理者才有权调整店铺设置。")
         return
     if len(argv) > 2 or argv[0] == "帮助":
         await waiting_set.finish("▾ 出勤大数据 - 帮助\n命令格式是:\n设置店铺 [店铺名] [店铺位置]\n注意只有管理员才可以有权设置店铺信息哦。")
@@ -1179,7 +1179,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await plate.send(f"▿ To {nickname} | Plate - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await plate.send(f"▿ To {nickname} | Plate - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
@@ -1341,7 +1341,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await levelprogress.send(f"▿ To {nickname} | 等级清谱查询 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
@@ -1451,7 +1451,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await rise_score.send(f"▿ To {nickname} | 鱼油的锦囊 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
@@ -1461,10 +1461,10 @@ async def _(bot: Bot, event: Event, state: T_State):
         payload = {'username': res.groups()[2].strip()}
     player_data, success = await get_player_data(payload)
     if success == 400:
-        await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
+        await rise_score.send(f"▿ To {nickname} | 鱼油的锦囊 - 错误\n您输入的玩家 ID 没有找到。\n请检查一下您的用户名是否输入正确或有无注册查分器系统？如您没有输入ID，请检查您的QQ是否与查分器绑定正确。\n若需要确认设置，请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/")
         return
     elif success == 403:
-        await rise_score.send(f'▿ To {nickname} | 犽的锦囊 - 被禁止\n{username} 不允许使用此方式查询。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
+        await rise_score.send(f'▿ To {nickname} | 鱼油的锦囊 - 被禁止\n{username} 不允许使用此方式查询。\n如果是您的账户，请检查您的QQ是否与查分器绑定正确后，不输入用户名再试一次。\n您需要修改查分器设置吗？请参阅:\nhttps://www.diving-fish.com/maimaidx/prober/')
         return
     else:
         dx_ra_lowest = 999
@@ -1506,12 +1506,12 @@ async def _(bot: Bot, event: Event, state: T_State):
                             if music_ra - sd_ra_lowest == int(res.groups()[1]) and [int(music.id), j, music_ra] not in player_sd_list:
                                 music_sd_list.append([music, diffs[j], ds, achievement, scoreRank[i + 1].upper(), music_ra, music.stats[j].difficulty])
         if len(music_dx_list) == 0 and len(music_sd_list) == 0:
-            await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 无匹配乐曲\n没有找到这样的乐曲。")
+            await rise_score.send(f"▿ To {nickname} | 鱼油的锦囊 - 无匹配乐曲\n没有找到这样的乐曲。")
             return
         elif len(music_dx_list) + len(music_sd_list) > 60:
-            await rise_score.send(f"▿ To {nickname} | 犽的锦囊 - 结果过多\n结果太多啦...一共我查到{len(res)} 条符合条件的歌!\n缩小一下查询范围吧。")
+            await rise_score.send(f"▿ To {nickname} | 鱼油的锦囊 - 结果过多\n结果太多啦...一共我查到{len(res)} 条符合条件的歌!\n缩小一下查询范围吧。")
             return
-        msg = f'▼ To {nickname} | 犽的锦囊 - 升 {res.groups()[1]} 分攻略\n'
+        msg = f'▼ To {nickname} | 鱼油的锦囊 - 升 {res.groups()[1]} 分攻略\n'
         if len(music_sd_list) != 0:
             msg += f'----- B25 区域升分推荐 (旧版本乐曲) -----\n'
             for music, diff, ds, achievement, rank, ra, difficulty in sorted(music_sd_list, key=lambda i: int(i[0]['id'])):
@@ -1536,7 +1536,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from gld_table where uid="{event.user_id}"')
             data = await c.fetchone()
             if data is None:
-                await base.send(f"▿ To {nickname} | 底分分析 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到小犽，请进行绑定或输入用户名再试一次。\n")
+                await base.send(f"▿ To {nickname} | 底分分析 - 错误\n在频道内，免输入用户名的前提是需要将您的 QQ 进行绑定。您尚未将您的 QQ 绑定到恋萌萌，请进行绑定或输入用户名再试一次。\n")
                 return
             else:
                 payload = {'qq': str(data[0])}
