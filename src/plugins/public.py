@@ -28,7 +28,7 @@ helper = on_command('help', aliases={'about'})
 
 @helper.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3.1-rc01\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
+    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3.1-rc02\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (暂不可用) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
    
 help_others = on_command('public.help')
 
@@ -36,14 +36,14 @@ help_others = on_command('public.help')
 async def _(bot: Bot, event: Event, state: T_State):
     help_str = '''▼ 其它功能 | Commands For Public                                             
 ------------------------------------------------------------------------------------------------------------------------------
-戳一戳                                                                                  来戳戳我？
+戳一戳                                                                                  来拍拍我的帽子？
 本群戳一戳情况                                                                    查看一下群里有几位杰出的无聊人
 今日雀魂                                                                               查看今天的雀魂运势
 mjxp                                                                                     看看你今天要做什么牌捏？
 低情商<str1>高情商<str2>                                                 生成一张低情商高情商图片，
                                                                                               把str1/2换成自己的话。
-gocho <str1> <str2>                                                         生成一张gocho图。
-金龙盘旋 <str1> <str2> <str3>                                         生成一张金龙盘旋图。
+gocho <str1> <str2>                                                         生成一张gocho图。（暂不可用）
+金龙盘旋 <str1> <str2> <str3>                                         生成一张金龙盘旋图。（暂不可用）
 投骰子<数量>                                                                       在线投骰子(?)
 投百面骰子<数量>                                                             * 可以选择六面/百面
                                                                                               这个功能可以随机禁言你1-600秒，前提恋萌萌是管理员。
@@ -822,7 +822,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await c.execute(f'select * from plp_table order by random() limit 1')
             data = await c.fetchone()
             if data is None:
-                await plp_find.finish(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 没有瓶子\n啊呀....小犽这目前一个瓶子都莫得。要不先扔一个看看？")
+                await plp_find.finish(f"▿ To {nickname} | 漂流社区: 捞瓶子 - 没有瓶子\n啊呀....恋萌萌这目前一个瓶子都莫得。要不先扔一个看看？")
                 return
             else:
                 if data[4] == 0:
