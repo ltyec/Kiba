@@ -395,7 +395,7 @@ Touch: {chart['notes'][3]} | Break: {chart['notes'][4]}'''
         except Exception as e:
             await query_chart.send(f"▿ 无匹配乐曲\n啊这...我没有找到这个歌。\n换一个试试吧。\n[Exception Occurred]\n{e}")
 
-xp_list = ['滴蜡熊', '性瘾', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '雷迪龙', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)', '百合咲', 'chu9', 'ppk', '太空烧鸡', 'liliana', '复读机', '木桶饭', '未琉', '一卡']
+xp_list = ['雷迪龙', '百合咲', 'chu9', 'ppk', '太空烧鸡', 'liliana', '复读机', '木桶饭', '未琉', '一卡']
 
 jrxp = on_command('jrxp', aliases={'今日性癖'})
 
