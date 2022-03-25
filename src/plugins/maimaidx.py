@@ -1923,7 +1923,7 @@ async def _(bot: Bot, event: Event, state: T_State):
                 msg += f"、{min_sp_dx} 的 S+"
             if min_s_dx != "":
                 msg += f"、{min_s_dx} 的 S"
-            msg += "。\n请注意：Best 15 按照全部歌曲的最高等级 (即 15.0) 显示；如需升分推荐，请移步犽的锦囊。"
+            msg += "。\n请注意：Best 15 按照全部歌曲的最高等级 (即 15.0) 显示；如需升分推荐，请移步鱼油的锦囊。"
             await base.send(msg)
         except Exception as e:
             await base.send(f"▿ To {nickname} | 底分分析 - 错误\n出现意外错误啦。\n[Exception Occurred]\n{e}")
