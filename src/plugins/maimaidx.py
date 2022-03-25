@@ -406,7 +406,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     nickname = event.sender.nickname
     h = hash(qq)
     rp = h % 100
-    xp = random.randint(0,35)
+    xp = random.randint(0,34)
     s = f"▾ 今日性癖\n{nickname}今天的性癖是{xp_list[xp]}，人品值是{rp}%.\n不满意的话再随一个吧！"
     await jrxp.finish(Message([
         {"type": "text", "data": {"text": s}}
@@ -463,7 +463,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     else:
         s += f'宜 ▷ {bwm_list_perfect[dwm_value_1]}\n'
         s += f'忌 ▷ {bwm_list_bad[dwm_value_2]}\n'
-    s += f"\n◢ 舞萌运势\n收歌指数: {ap}%\n最佳朝向: {fx_list[random.randint(0, 3)]}\n最佳游戏位置: {play_list[random.randint(0, 2)]}\n"
+    s += f"\n◢ 舞萌运势\n收歌指数: {ap}%\n最佳朝向: {fx_list[random.randint(0, 4)]}\n最佳游戏位置: {play_list[random.randint(0, 4)]}\n"
     for i in range(14):
         if wm_value[i] == 3:
             good_value[good_count] = i
