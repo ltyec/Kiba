@@ -28,7 +28,7 @@ helper = on_command('help', aliases={'about'})
 
 @helper.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
+    await helper.send("▾ 关于\n恋萌萌(lmm)\n版本: 0.3.1-rc01\nby 未琉Clay\n----------------------\n▾ 帮助\n查询 Maimai DX 模块帮助: maimai.help\n查询 跑团/COC 模块帮助: coc.help\n查询 Arcaea 模块 (Beta) 帮助: arcaea.help\n查询 其它功能/漂流社区 帮助: public.help\n查询 群管理模块 帮助: admin.help\n查询 恋萌萌附加 帮助: lmm.help")
    
 help_others = on_command('public.help')
 
@@ -406,7 +406,7 @@ async def _(bot: Bot, event: Event, state: T_State):
                 {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
             ]))
         gid = event.group_id
-        if random.random() < 0.5:
+        if random.random() < 0.1:
             await snmb.finish(Message([
                 {"type": "text", "data": {"text": "随你"}},
                 {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
