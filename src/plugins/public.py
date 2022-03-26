@@ -392,7 +392,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     except AttributeError:
         await random_person.finish("你不在群聊使用.....所以你随啥呢这是，这个要去群里用。")
 
-snmb = on_regex("^随个(?!([男女]?)群友)")
+snmb = on_regex("^随个(?!([男女]?)群友)(?!([1-9]?[0-5]?)/+)(?!(?:dx|sd|标准)?[绿黄红紫白]?[0-9]+\+?)")
 
 @snmb.handle()
 async def _(bot: Bot, event: Event, state: T_State):
