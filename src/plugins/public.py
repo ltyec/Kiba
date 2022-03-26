@@ -402,11 +402,11 @@ async def _(bot: Bot, event: Event, state: T_State):
         mt = event.message_type
         if mt == "guild":
             await snmb.finish(Message([
-                {"type": "text", "data": {"text": "随你"}},
+                {"type": "text", "data": {"text": "频道随不了，随你"}},
                 {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
             ]))
         gid = event.group_id
-        if random.random() < 0.1:
+        if random.random() < 0.0:
             await snmb.finish(Message([
                 {"type": "text", "data": {"text": "随你"}},
                 {"type": "image", "data": {"file": "https://www.diving-fish.com/images/emoji/horse.png"}}
