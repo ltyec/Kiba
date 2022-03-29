@@ -1623,7 +1623,7 @@ luosi = on_regex("中考|高考|考研")
 
 @luosi.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    v = re.search("中考|高考|考研", str(event.get_message())).group(1)
+    v = re.search("中考|高考|考研", str(event.get_message())).group()
     await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
     return
 
