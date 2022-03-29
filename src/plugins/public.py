@@ -2,7 +2,7 @@ import random
 import re
 
 from PIL import Image
-from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex
+from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex, on_keyword
 from nonebot.typing import T_State
 from nonebot.adapters.cqhttp import Message, Event, Bot
 from src.libraries.image import *
@@ -1618,3 +1618,14 @@ async def _(bot: Bot, event: Event):
         }]))
     except Exception as e:
         await img_template.send(f"▿ LMM Image Templator - Exception\n[Exception Occurred]\n{str(e)}")
+
+ luosi = on_regex("中考|高考|考研")
+
+@luosi.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    v = re.match("中考|高考|考研", str(event.get_message())).group(1)
+    await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
+    return
+
+
+                    
