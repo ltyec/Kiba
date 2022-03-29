@@ -1619,7 +1619,7 @@ async def _(bot: Bot, event: Event):
     except Exception as e:
         await img_template.send(f"▿ LMM Image Templator - Exception\n[Exception Occurred]\n{str(e)}")
 
- luosi = on_regex("中考|高考|考研")
+luosi = on_regex("中考|高考|考研")
 
 @luosi.handle()
 async def _(bot: Bot, event: Event, state: T_State):
