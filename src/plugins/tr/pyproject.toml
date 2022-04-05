@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "nonebot_plugin_translator"
+version = "2.0.0-alpha.13.post0"
+description = "Multi language tanslator worked with nonebot2"
+authors = ["Lancercmd <lancercmd@gmail.com>"]
+license = "GPLv3"
+readme = "README.md"
+repository = "https://github.com/Lancercmd/nonebot_plugin_translator"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+nonebot2 = "^2.0.0-alpha.13"
+aiohttp = "^3.7.4.post0"
+ujson = "^4.0.2"
+nonebot-adapter-cqhttp = "^2.0.0-alpha.13"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+autopep8 = "^1.5.7"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
