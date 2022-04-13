@@ -56,6 +56,7 @@ gocho <str1> <str2>                                                         生�
 模拟抽卡/抽卡模拟                                                               抽卡模拟器
 模拟十连/十连模拟                                                               抽卡模拟器 (十连模式)
 我的抽卡情况/抽卡情况                                                        查看抽卡模拟器的抽卡情况
+来张丁真/顶针（随个丁真/顶针）                                               随机丁真图片
 ------------------------------------------------------------------------------------------------------------------------------
 ▼ 漂流社区 | Bottle Public Community                                           
 ------------------------------------------------------------------------------------------------------------------------------
@@ -1627,31 +1628,14 @@ async def _(bot: Bot, event: Event, state: T_State):
     await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
     return
 
-dingzhen = on_regex(r'生成.+丁真，鉴定为.+')
+dingzhen = on_command("来张丁真", aliases={"随个丁真，来张顶针，随个顶针"})
 
 @dingzhen.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    dzpath = 'src/static/dingzhen.jpg'
-    fontpath = "src/static/msyh.ttc"
-    font = ImageFont.truetype(fontpath, 100)
-    regex = '生成(.+)丁真，鉴定为(.+)'
-    nickname = event.sender.nickname
-    groups = re.match(regex, str(event.get_message())).groups()
-    up = groups[0].strip()
-    down = groups[1].strip()
-    if len(up) > 15 or len(down) > 15:
-        await dingzhen.send("▿ LMM Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
-        return
-    text = up + "丁真 \n 鉴定为" + down
+    r = randint(0, 119)
+    dzpath = 'src/static/' + str(r) + '.png'
     img_p = Image.open(dzpath)
-    draw = ImageDraw.Draw(img_p)
-    draw.text((0, 100), text, font =font, align ="center")
     await dingzhen.send(Message([{
-        "type": "text",
-        "data": {
-            "text": f"▾ T‍o {nickname} | LMM Image Creator - 义眼丁真\n"
-        }
-    },{
         "type": "image",
         "data": {
             "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
