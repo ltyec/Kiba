@@ -1642,10 +1642,10 @@ async def _(bot: Bot, event: Event, state: T_State):
     if len(up) > 15 or len(down) > 15:
         await dingzhen.send("▿ LMM Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
         return
-    yydz = up + "丁真 /n 鉴定为" + down
+    text = up + "丁真 /n 鉴定为" + down
     img_p = Image.open(dzpath)
     draw = ImageDraw.Draw(img_p)
-    draw.yydz((0, 300), yydz, font =font, align ="right")
+    draw.text((0, 300), text, font =font, align ="right")
     await dingzhen.send(Message([{
         "type": "text",
         "data": {
