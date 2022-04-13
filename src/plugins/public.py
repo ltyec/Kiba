@@ -1,7 +1,7 @@
 import random
 import re
 
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex, on_keyword
 from nonebot.typing import T_State
 from nonebot.adapters.cqhttp import Message, Event, Bot
@@ -1627,5 +1627,35 @@ async def _(bot: Bot, event: Event, state: T_State):
     await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
     return
 
+dingzhen = on_regex(r'生成.+丁真，鉴定为.+')
+
+@dingzhen.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    dzpath = 'src/static/dingzhen.jpg'
+    fontpath = "src/static/msyh.ttc"
+    font = ImageFont.truetype(fontpath, 48)
+    regex = '生成(.+)丁真，鉴定为(.+)'
+    nickname = event.sender.nickname
+    groups = re.match(regex, str(event.get_message())).groups()
+    up = groups[0].strip()
+    down = groups[1].strip()
+    if len(up) > 15 or len(down) > 15:
+        await dingzhen.send("▿ LMM Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
+        return
+    yydz = up + "丁真 /n 鉴定为" + down
+    img_p = Image.open(dzpath)
+    draw = ImageDraw.Draw(img_p)
+    draw.yydz((0, 300), yydz, font =font, align ="right")
+    await dingzhen.send(Message([{
+        "type": "text",
+        "data": {
+            "text": f"▾ T‍o {nickname} | LMM Image Creator - 义眼丁真\n"
+        }
+    },{
+        "type": "image",
+        "data": {
+            "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
+        }
+    }]))
 
                     
