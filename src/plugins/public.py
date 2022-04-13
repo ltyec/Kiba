@@ -1633,7 +1633,7 @@ dingzhen = on_regex(r'生成.+丁真，鉴定为.+')
 async def _(bot: Bot, event: Event, state: T_State):
     dzpath = 'src/static/dingzhen.jpg'
     fontpath = "src/static/msyh.ttc"
-    font = ImageFont.truetype(fontpath, 48)
+    font = ImageFont.truetype(fontpath, 100)
     regex = '生成(.+)丁真，鉴定为(.+)'
     nickname = event.sender.nickname
     groups = re.match(regex, str(event.get_message())).groups()
@@ -1642,10 +1642,10 @@ async def _(bot: Bot, event: Event, state: T_State):
     if len(up) > 15 or len(down) > 15:
         await dingzhen.send("▿ LMM Image Creator - 文字过多\n为了图片质量，请不要多于15个字符嗷。")
         return
-    text = up + "丁真 /n 鉴定为" + down
+    text = up + "丁真 \n 鉴定为" + down
     img_p = Image.open(dzpath)
     draw = ImageDraw.Draw(img_p)
-    draw.text((0, 300), text, font =font, align ="right")
+    draw.text((0, 100), text, font =font, align ="center")
     await dingzhen.send(Message([{
         "type": "text",
         "data": {
