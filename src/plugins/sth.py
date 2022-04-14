@@ -19,7 +19,3 @@ async def _(bot: Bot, event: Event, state: T_State):
     await fudu.finish(msg)
     msg = 0
   return
- 
-@on_notice('group_increase')
-async def _(session: NoticeSession):
-    await session.send('欢迎新群友～')
