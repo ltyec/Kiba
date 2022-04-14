@@ -29,6 +29,6 @@ async def final_msg(bot: Bot, event: Event, state: T_State):
   global msg1, msg2, msg3
   msg3 = str(event.get_message())
   if msg1==msg2==msg3:
-    await fudu.finish(msg)
+    await fudu.finish(msg1)
   else:
     return
