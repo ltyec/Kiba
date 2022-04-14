@@ -1,4 +1,4 @@
-from nonebot import on_command, on_notice
+from nonebot import on_regex, on_notice
 from nonebot.adapters.cqhttp import Message
 from nonebot.typing import T_State
 from nonebot.adapters import Bot,Event
@@ -8,7 +8,7 @@ import time
 
 msg = 0
 
-fudu = on_command(priority=10)
+fudu = on_regex("[\s\S]*")
 
 @fudu.handle()
 async def _(bot: Bot, event: Event, state: T_State):
