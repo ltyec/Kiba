@@ -13,12 +13,12 @@ async def _(bot: Bot, event: Event, state: T_State):
   msg1 = str(event.get_message())
   pass
 
-@fudu.next()
+@fudu.got()
 async def _(bot: Bot, event: Event, state: T_State):
   msg2 = str(event.get_message())
   pass
 
-@fudu.final()
+@fudu.got()
 async def _(bot: Bot, event: Event, state: T_State):
   msg3 = str(event.get_message())
   if msg1==msg2==msg3:
