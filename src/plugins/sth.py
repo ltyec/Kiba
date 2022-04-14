@@ -9,17 +9,17 @@ import time
 fudu = on_regex("[\s\S]*")
 
 @fudu.handle()
-async def _(bot: Bot, event: Event, state: T_State):
+async def first_msg(bot: Bot, event: Event, state: T_State):
   msg1 = str(event.get_message())
   pass
 
-@fudu.got()
-async def _(bot: Bot, event: Event, state: T_State):
+@fudu.got("next")
+async def next_msg(bot: Bot, event: Event, state: T_State):
   msg2 = str(event.get_message())
   pass
 
-@fudu.got()
-async def _(bot: Bot, event: Event, state: T_State):
+@fudu.got("final")
+async def final_msg(bot: Bot, event: Event, state: T_State):
   msg3 = str(event.get_message())
   if msg1==msg2==msg3:
     await fudu.finish(msg)
