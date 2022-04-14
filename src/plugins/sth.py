@@ -19,4 +19,6 @@ async def _(bot: Bot, event: Event, state: T_State):
   elif msg == msg1 :
     await fudu.finish(msg)
     msg = 0
-  return
+    return
+  else:
+    return
