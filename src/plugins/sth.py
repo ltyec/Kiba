@@ -6,19 +6,14 @@ import requests
 from nonebot.adapters.cqhttp.message import MessageSegment
 import time
 
-msg = 0
-
 fudu = on_regex("[\s\S]*")
 
 @fudu.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-  msg1 = str(event.get_message())
+  msg = str(event.get_message())
   global msg
-  if msg == 0 :
-    msg = msg1
-  elif msg == msg1 :
-    await fudu.finish(msg)
-    msg = 0
-    return
-  else:
-    return
+  fudu1 = on_command(msg)
+
+@fudu1.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+  await fudu.finish(msg)
