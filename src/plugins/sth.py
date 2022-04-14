@@ -1,4 +1,4 @@
-from nonebot import on_command, on_regex, on_notice, NoticeSession
+from nonebot import on_command, on_notice
 from nonebot.adapters.cqhttp import Message
 from nonebot.typing import T_State
 from nonebot.adapters import Bot,Event
