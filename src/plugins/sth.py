@@ -39,11 +39,13 @@ async def final_msg(bot: Bot, event: Event, state: T_State):
     return
 
 while msg3:
+  global msg3, msg4
   @fudu.got("check")
   async def check_msg(bot: Bot, event: Event, state: T_State):
     global msg3, msg4
     msg4 = str(event.get_message())
-    if msg3 == msg4:
-      continue
-    else:
-      break
+  if msg3 == msg4:
+    continue
+    time.sleep(1)
+  else:
+    break
