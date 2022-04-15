@@ -33,7 +33,7 @@ async def final_msg(bot: Bot, event: Event, state: T_State):
   msg3 = str(event.get_message())
   if msg2 == msg3:
     await fudu.finish(msg1)
-    pass
+    return
   else:
     return
 
