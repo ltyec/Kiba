@@ -41,4 +41,4 @@ blhx = on_keyword("granbluefantasy.jp")
 
 @blhx.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-  await fudu.finish("好钓", at_sender=True)
+  await fudu.finish("骑空士钓你妈呢🥵", at_sender=True)
