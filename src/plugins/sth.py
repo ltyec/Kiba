@@ -45,7 +45,7 @@ while msg3:
     global msg3, msg4
     msg4 = str(event.get_message())
   if msg3 == msg4:
-    continue
     time.sleep(1)
+    continue
   else:
     break
