@@ -1633,7 +1633,7 @@ dingzhen = on_command("来张丁真", aliases={"随个丁真，来张顶针，�
 @dingzhen.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     r = randint(0, 119)
-    dzpath = 'src/static/' + str(r) + '.png'
+    dzpath = 'src/static/dj/' + str(r) + '.png'
     img_p = Image.open(dzpath)
     await dingzhen.send(Message([{
         "type": "image",
