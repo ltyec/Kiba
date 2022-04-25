@@ -37,8 +37,3 @@ async def final_msg(bot: Bot, event: Event, state: T_State):
   else:
     return
 
-blhx = on_keyword("granbluefantasy.jp")
-
-@blhx.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-  await blhx.finish("骑空士钓你妈呢🥵", at_sender=True)
