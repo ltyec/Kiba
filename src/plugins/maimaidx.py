@@ -890,7 +890,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     state["k"] = k
     state["guess_object"] = guess
     state["cycle"] = 0
-    guess_cd_dict[k] = time.time() + 60
+    guess_cd_dict[k] = time.time() + 10
     await guess_music.send("▾ 猜歌\n我将从热门乐曲中选择一首歌，并描述它的一些特征。大家可以猜一下！\n知道答案的话，可以告诉我谱面ID、歌曲标题或者标题中连续5个以上的片段来向我阐述答案！\n猜歌时查歌等其他命令依然可用，这个命令可能会很刷屏，管理员可以根据情况通过【猜歌设置】命令设置猜歌是否启用。")
     asyncio.create_task(guess_music_loop(bot, event, state))
 
