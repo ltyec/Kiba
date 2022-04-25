@@ -880,7 +880,7 @@ async def _(bot: Bot, event: Event, state: T_State):
                 await guess_music.send("▿ 猜歌 - 正在进行中\n当前已有正在进行的猜歌，要不要来参与一下呀？")
                 return
     if len(guess_dict) >= 5:
-        await guess_music.finish("▿ 猜歌 - 同时进行的群过多\n小犽有点忙不过来了...现在正在猜的群太多啦，晚点再试试如何？")
+        await guess_music.finish("▿ 猜歌 - 同时进行的群过多\n恋萌萌有点忙不过来了...现在正在猜的群太多啦，晚点再试试如何？")
         return
     if k in guess_cd_dict and time.time() < guess_cd_dict[k]:
         await guess_music.finish(f"▿ 猜歌 - 冷却中\n已经猜过一次啦！下次猜歌会在 {time.strftime('%H:%M', time.localtime(guess_cd_dict[k]))} 可用噢")
@@ -890,7 +890,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     state["k"] = k
     state["guess_object"] = guess
     state["cycle"] = 0
-    guess_cd_dict[k] = time.time() + 600
+    guess_cd_dict[k] = time.time() + 60
     await guess_music.send("▾ 猜歌\n我将从热门乐曲中选择一首歌，并描述它的一些特征。大家可以猜一下！\n知道答案的话，可以告诉我谱面ID、歌曲标题或者标题中连续5个以上的片段来向我阐述答案！\n猜歌时查歌等其他命令依然可用，这个命令可能会很刷屏，管理员可以根据情况通过【猜歌设置】命令设置猜歌是否启用。")
     asyncio.create_task(guess_music_loop(bot, event, state))
 
