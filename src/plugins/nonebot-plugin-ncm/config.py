@@ -9,7 +9,7 @@ class Config(BaseSettings):
     superusers: list = ["1140106918"]
     ncm_admin: list = ["1140106918", "1140106918"]  # 设置命令权限（非解析下载，仅解析功能开关设置）
     ncm_phone: str = "18766633323"  # 账号
-    ncm_password: str = "Asong123"  # 密码
+    ncm_password: str = "********"  # 密码
     ncm_song: bool = True  # 单曲解析开关
     ncm_list: bool = True  # 歌单解析开关
     ncm_priority: int = 2  # 解析优先级
