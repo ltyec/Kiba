@@ -1641,11 +1641,11 @@ async def _(bot: Bot, event: Event, state: T_State):
     jdata = json.loads(pr)
     pr2 = jdata['picpath']
     url = pr2['pic_path']
-    pic = requests.get('http://www.yiyandingzhen.top/' + url)
+    pic = 'http://www.yiyandingzhen.top/' + url
     await dingzhen.send(Message([{
         "type": "image",
         "data": {
-            "file": f"base64://{str(image_to_base64(pic.content), encoding='utf-8')}"
+            "file": f"[CQ:image,file={pic}]"
         }
     }]))
 
