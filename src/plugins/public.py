@@ -1646,6 +1646,6 @@ async def _(bot: Bot, event: Event, state: T_State):
             "data": {
                 "file": f"http://www.yiyandingzhen.top/{url}",
             }
-        }])))
+        }]))
 
                     
