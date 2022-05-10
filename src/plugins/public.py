@@ -1,5 +1,6 @@
 import random
 import re
+import json
 
 from PIL import Image, ImageFont, ImageDraw
 from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex, on_keyword
@@ -1632,13 +1633,18 @@ dingzhen = on_command("来张丁真", aliases={"随个丁真，来张顶针，�
 
 @dingzhen.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    r = randint(0, 119)
-    dzpath = 'src/static/dj/' + str(r) + '.png'
-    img_p = Image.open(dzpath)
+    php = requests.get('http://www.yiyandingzhen.top/getpic.php')
+    php.encoding = 'utf-8'
+    pray = php.text.replace("[", "")
+    pr = pray.replace("]", "")
+    jdata = json.loads(pr)
+    pr2 = jdata['picpath']
+    url = pr2['pic_path']
+    pic = requests.get('http://www.yiyandingzhen.top/' + url)
     await dingzhen.send(Message([{
         "type": "image",
         "data": {
-            "file": f"base64://{str(image_to_base64(img_p), encoding='utf-8')}"
+            "file": f"base64://{str(image_to_base64(pic.content), encoding='utf-8')}"
         }
     }]))
 
