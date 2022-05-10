@@ -1,6 +1,7 @@
 import random
 import re
 import json
+import requests
 
 from PIL import Image, ImageFont, ImageDraw
 from nonebot import on_command, on_message, on_notice, require, get_driver, on_regex, on_keyword
