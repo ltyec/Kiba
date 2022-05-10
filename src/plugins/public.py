@@ -1642,11 +1642,6 @@ async def _(bot: Bot, event: Event, state: T_State):
     pr2 = jdata['picpath']
     url = pr2['pic_path']
     pic = 'http://www.yiyandingzhen.top/' + url
-    await dingzhen.send(Message([{
-        "type": "image",
-        "data": {
-            "file": f"[CQ:image,file={pic}]"
-        }
-    }]))
+    await dingzhen.send("[CQ:image,subType=0,url=" + pic + "]")
 
                     
