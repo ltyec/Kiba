@@ -1627,7 +1627,8 @@ luosi = on_regex("中考|高考|考研")
 @luosi.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     v = re.search("中考|高考|考研", str(event.get_message())).group()
-    await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
+    if "呢，快找个厂子拧螺丝吧！" not in str(event.get_message()):
+        await luosi.send("害搁这" + v + "呢，快找个厂子拧螺丝吧！")
     return
 
 dingzhen = on_command("来张丁真", aliases={"随个丁真，来张顶针，随个顶针"})
