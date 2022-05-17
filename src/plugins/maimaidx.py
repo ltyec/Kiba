@@ -968,8 +968,8 @@ async def _(bot: Bot, event: Event, state: T_State):
     now = datetime.datetime.now()
     c = await db.cursor()
     time = f"{now.year}/{now.month}/{now.day} {now.hour}:{now.strftime('%M')}:{now.strftime('%S')}"
-    if res.groups()[1] == "几":
-        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+    if res.groups()[2] == "几":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[1]}"')
         data = await c.fetchone()
         if data is None:
             await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
@@ -977,19 +977,19 @@ async def _(bot: Bot, event: Event, state: T_State):
         else:
             await waiting.finish(f"▾ 出勤大数据\n{data[0]} 有 {data[2]} 人出勤。最后更新时间:{data[3]}")
             return
-    elif res.groups()[1] == "+1":
-        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+    elif res.groups()[2] == "+1":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[1]}"')
         data = await c.fetchone()
         if data is None:
             await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
             return
         else:
-            await c.execute(f'update waiting_table set wait={data[2] + 1}, updated="{time}" where shop="{res.groups()[0]}"')
+            await c.execute(f'update waiting_table set wait={data[2] + 1}, updated="{time}" where shop="{res.groups()[1]}"')
             await db.commit()
             await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{data[0]} 有 {data[2] + 1} 人出勤。最后更新时间:{time}")
             return
-    elif res.groups()[1] == "-1":
-        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+    elif res.groups()[2] == "-1":
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[1]}"')
         data = await c.fetchone()
         if data is None:
             await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
@@ -998,20 +998,20 @@ async def _(bot: Bot, event: Event, state: T_State):
             if data[2] - 1 < 0:
                 await waiting.finish("▿ 出勤大数据\n不能再减了，再减就变成灵异事件了！")
                 return
-            await c.execute(f'update waiting_table set wait={data[2] - 1}, updated="{time}" where shop="{res.groups()[0]}"')
+            await c.execute(f'update waiting_table set wait={data[2] - 1}, updated="{time}" where shop="{res.groups()[1]}"')
             await db.commit()
             await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{data[0]} 有 {data[2] - 1} 人出勤。最后更新时间:{time}")
             return
     else:
-        await c.execute(f'select * from waiting_table where shop="{res.groups()[0]}"')
+        await c.execute(f'select * from waiting_table where shop="{res.groups()[1]}"')
         data = await c.fetchone()
         if data is None:
             await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
             return
         else:
-            await c.execute(f'update waiting_table set wait={res.groups()[1]}, updated="{time}" where shop="{res.groups()[0]}"')
+            await c.execute(f'update waiting_table set wait={res.groups()[1]}, updated="{time}" where shop="{res.groups()[1]}"')
             await db.commit()
-            await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{res.groups()[0]} 有 {res.groups()[1]} 人出勤。最后更新时间:{time}")
+            await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{res.groups()[1]} 有 {res.groups()[2]} 人出勤。最后更新时间:{time}")
             return
 
 location = on_regex(r'.+位置', rule=to_me())
