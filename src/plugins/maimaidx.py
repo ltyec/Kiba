@@ -959,7 +959,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await waiting_set.finish(f"▾ 出勤大数据\n已成功设置店铺。\n店铺名: {argv[0]}\n出勤人数: 0\n修改时间: {time}")
             await db.commit()
 
-waiting = on_regex(r'(.+)([0-9]?几?\+?\-?1?)人?', rule=to_me())
+waiting = on_regex(r'(.+)([0-9]?几?\+?\-?1?)人?')
 @waiting.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     regex = "(.+)([0-9]?几?\+?\-?1?)人?"
