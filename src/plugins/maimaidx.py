@@ -959,7 +959,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await waiting_set.finish(f"▾ 出勤大数据\n已成功设置店铺。\n店铺名: {argv[0]}\n出勤人数: 0\n修改时间: {time}")
             await db.commit()
 
-waiting = on_regex(r'(.+)([0-9]?几?\+?\-?1?)人?', priority=18)
+waiting = on_regex(r'(.+)([0-9]?几?\+?\-?1?)人?', rule=to_me())
 @waiting.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     regex = "(.+)([0-9]?几?\+?\-?1?)人?"
@@ -1009,7 +1009,7 @@ async def _(bot: Bot, event: Event, state: T_State):
             await waiting.finish("▿ 出勤大数据\n此店铺不存在，请联系管理员添加此店铺。")
             return
         else:
-            await c.execute(f'update waiting_table set wait={res.groups()[0]}, updated="{time}" where shop="{res.groups()[0]}"')
+            await c.execute(f'update waiting_table set wait={res.groups()[1]}, updated="{time}" where shop="{res.groups()[0]}"')
             await db.commit()
             await waiting.finish(f"▾ 出勤大数据\n更新完成！\n{res.groups()[0]} 有 {res.groups()[1]} 人出勤。最后更新时间:{time}")
             return
