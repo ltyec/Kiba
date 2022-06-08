@@ -1638,17 +1638,14 @@ dingzhen = on_command("来张丁真", aliases={"随个丁真，来张顶针，�
 
 @dingzhen.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    php = requests.get('http://www.yiyandingzhen.top/getpic.php')
+    php = requests.get('https://api.aya1.top/randomdj?r=0')
     php.encoding = 'utf-8'
-    pray = php.text.replace("[", "")
-    pr = pray.replace("]", "")
-    jdata = json.loads(pr)
-    pr2 = jdata['picpath']
-    url = pr2['pic_path']
+    jdata = json.loads(php.text)
+    url = jdata['url']
     await dingzhen.send(Message([{
             "type": "image",
             "data": {
-                "file": f"http://www.yiyandingzhen.top/{url}",
+                "file": f"{url}",
             }
         }]))
 
