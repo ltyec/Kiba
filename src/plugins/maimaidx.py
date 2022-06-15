@@ -407,6 +407,8 @@ async def _(bot: Bot, event: Event, state: T_State):
     h = hash(qq)
     rp = h % 100
     xp = random.randint(0,34)
+    if qq == 1987255247:
+        xp = 34
     s = f"▾ 今日性癖\n{nickname}今天的性癖是{xp_list[xp]}，人品值是{rp}%.\n不满意的话再随一个吧！"
     await jrxp.finish(Message([
         {"type": "text", "data": {"text": s}}
