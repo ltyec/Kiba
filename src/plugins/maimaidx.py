@@ -108,7 +108,7 @@ def song_txt(music: Music):
         {
             "type": "image",
             "data": {
-                "file": f"https://www.diving-fish.com/covers/{music.id}.jpg"
+                "file": f"https://www.diving-fish.com/covers/{get_cover_len4_id(music.id)}.png"
             }
         },
         {
@@ -304,7 +304,7 @@ async def _(bot: Bot, event: Event, state: T_State):
                 tag = stats['tag']
             except:
                 tag = "Insufficient Difficulty Data"
-            file = f"https://www.diving-fish.com/covers/{music['id']}.jpg"
+            file = f"https://www.diving-fish.com/covers/{get_cover_len4_id(music['id'])}.png"
             if len(chart['notes']) == 4:
                 msg = f'''------ {level_name[level_index]} ------
 Lv {level} ▸ {ds} | {tag}
@@ -359,7 +359,7 @@ Touch: {chart['notes'][3]} | Break: {chart['notes'][4]}'''
         name = groups[1]
         music = total_list.by_id(name)
         try:
-            file = f"https://www.diving-fish.com/covers/{music['id']}.jpg"
+            file = f"https://www.diving-fish.com/covers/{get_cover_len4_id(music['id'])}.png"
             await query_chart.send(Message([
                 {
                     "type": "text",
@@ -395,7 +395,7 @@ Touch: {chart['notes'][3]} | Break: {chart['notes'][4]}'''
         except Exception as e:
             await query_chart.send(f"▿ 无匹配乐曲\n啊这...我没有找到这个歌。\n换一个试试吧。\n[Exception Occurred]\n{e}")
 
-xp_list = ['滴蜡熊', '性瘾', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '雷迪龙', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)', '百合咲', 'chu9', 'ppk', '太空烧鸡', 'liliana', '复读机', '木桶饭', '未琉', '一卡', '月零']
+xp_list = ['滴蜡熊', '性瘾', '14+', '白潘', '紫潘', 'PANDORA BOXXX', '雷迪龙', '旧框', '干饭', '超常maimai', '收歌', '福瑞', '削除', 'HAPPY', '谱面-100号', 'lbw', '茄子卡狗', '打五把CSGO', '一姬', '打麻将', '光吉猛修', '怒锤', '暴漫', '鼓动', '鼓动(红)', '百合咲', 'chu9', 'ppk', '鱼油', 'liliana', '复读机', '木桶饭', '未琉', '一卡', '月零', '错不了的小🐟', 'riya', 'md', '天王寺璃奈']
 
 jrxp = on_command('jrxp', aliases={'今日性癖'})
 
@@ -406,9 +406,15 @@ async def _(bot: Bot, event: Event, state: T_State):
     nickname = event.sender.nickname
     h = hash(qq)
     rp = h % 100
-    xp = random.randint(0,34)
+    xp = random.randint(0,38)
     if qq == 1987255247:
         xp = 34
+    if qq == 516901651:
+        xp = 36
+    if qq == 3224373302:
+        xp = 28
+    if qq == 460146524:
+        xp = 38
     s = f"▾ 今日性癖\n{nickname}今天的性癖是{xp_list[xp]}，人品值是{rp}%.\n不满意的话再随一个吧！"
     await jrxp.finish(Message([
         {"type": "text", "data": {"text": s}}
