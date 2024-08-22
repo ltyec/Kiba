@@ -324,8 +324,12 @@ class DrawBest(object):
         font2 = ImageFont.truetype('src/static/adobe_simhei.otf', 14, encoding='utf-8')
         playCountInfo = f'SD: {self.sdRating} + DX: {self.dxRating} = {self.playerRating}'
         shougouImgW, shougouImgH = shougouImg.size
-        playCountInfoW, playCountInfoH = shougouDraw.textsize(playCountInfo, font2)
-        textPos = ((shougouImgW - playCountInfoW - font2.getoffset(playCountInfo)[0]) / 2, 5)
+        # playCountInfoW, playCountInfoH = shougouDraw.textsize(playCountInfo, font2)               # 过时的用法textsize()
+        # textPos = ((shougouImgW - playCountInfoW - font2.getoffset(playCountInfo)[0]) / 2, 5)     # 过时的用法getoffset()
+        bbox = shougouDraw.textbbox((0, 0), playCountInfo, font2)
+        playCountInfoW = bbox[2] - bbox[0]
+        playCountInfoH = bbox[3] - bbox[1]
+        textPos = ((shougouImgW - playCountInfoW - font2.getbbox(playCountInfo)) / 2, 5)
         shougouDraw.text((textPos[0] - 1, textPos[1]), playCountInfo, 'black', font2)
         shougouDraw.text((textPos[0] + 1, textPos[1]), playCountInfo, 'black', font2)
         shougouDraw.text((textPos[0], textPos[1] - 1), playCountInfo, 'black', font2)
